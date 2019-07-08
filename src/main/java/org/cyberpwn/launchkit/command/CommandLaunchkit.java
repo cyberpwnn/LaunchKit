@@ -2,17 +2,23 @@ package org.cyberpwn.launchkit.command;
 
 import org.cyberpwn.launchkit.Commander;
 
-public class CommandStop implements Command
+public class CommandLaunchkit implements Command
 {
 	@Override
 	public String getName()
 	{
-		return "stop";
+		return "launchkit";
 	}
 
 	@Override
 	public void handle(Commander sender, String[] args)
 	{
-		sender.sendMessage("Shutting Down");
+		if(args.length >= 1)
+		{
+			if(args[0].equals("stop"))
+			{
+				System.exit(0);
+			}
+		}
 	}
 }

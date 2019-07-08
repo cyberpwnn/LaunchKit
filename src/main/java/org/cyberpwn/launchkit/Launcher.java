@@ -22,6 +22,7 @@ import org.cyberpwn.launchkit.util.GList;
 import org.cyberpwn.launchkit.util.JSONArray;
 import org.cyberpwn.launchkit.util.JSONException;
 import org.cyberpwn.launchkit.util.JSONObject;
+import org.cyberpwn.launchkit.util.M;
 import org.cyberpwn.launchkit.util.OSF;
 import org.cyberpwn.launchkit.util.StreamGobbler;
 import org.cyberpwn.launchkit.util.VIO;
@@ -31,6 +32,7 @@ import com.google.common.collect.Lists;
 public class Launcher
 {
 	private final DownloadManager downloadManager;
+	private final Commander commander;
 	private final File root;
 	private final File launcherRoot;
 	private final File launcherLibraries;
@@ -58,10 +60,13 @@ public class Launcher
 	private String authUUID;
 	private String authAccessToken;
 	private boolean authenticated;
+	private boolean validated;
+	private Process activeProcess;
 	private final String platform = OSF.rawOS();
 
 	public Launcher() throws InterruptedException, JSONException, IOException, ClassNotFoundException
 	{
+		commander = new Commander();
 		status("Starting");
 		authenticated = false;
 		root = new File(new File(Environment.local_fs ? "." : System.getProperty("user.home")), Environment.root_folder_name);
@@ -82,6 +87,7 @@ public class Launcher
 		settingsFile = new File(root, "launch-settings.json");
 		downloadManager = new DownloadManager();
 		setFolderVisibility(launcherRoot, true);
+		validated = false;
 	}
 
 	public Launcher authenticateExternal(String profileName, String profileType, String uuid, String accessToken)
@@ -140,8 +146,26 @@ public class Launcher
 		return this;
 	}
 
+	public Launcher killGame()
+	{
+		if(activeProcess != null)
+		{
+			if(activeProcess.isAlive())
+			{
+				activeProcess.destroyForcibly();
+			}
+		}
+
+		return this;
+	}
+
 	public Launcher launch() throws JSONException, IOException, InterruptedException
 	{
+		if(!validated)
+		{
+			validate();
+		}
+
 		JSONObject o = new JSONObject(VIO.readAll(settingsFile));
 		l("Using Java at " + javaw());
 		GList<String> parameters = new GList<>();
@@ -210,10 +234,66 @@ public class Launcher
 		v("======================================================================");
 		ProcessBuilder pb = new ProcessBuilder(parameters);
 		pb.directory(minecraftFolder);
-		Process p = pb.start();
-		new StreamGobbler(p.getInputStream(), "Client|OUT");
-		new StreamGobbler(p.getErrorStream(), "Client|ERR");
-		l("Client Process exited with code " + p.waitFor());
+		activeProcess = pb.start();
+		new StreamGobbler(activeProcess.getInputStream(), "Client|OUT");
+		new StreamGobbler(activeProcess.getErrorStream(), "Client|ERR");
+		commander.sendMessage("running");
+		new Thread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				try
+				{
+					int code = activeProcess.waitFor();
+					l("Client Process exited with code " + code);
+					commander.sendMessage("stopped");
+
+					if(code != 0)
+					{
+						long ms = M.ms();
+						File crashLog = null;
+						File clogs = new File(minecraftFolder, "crash-reports");
+
+						if(clogs.exists() && clogs.listFiles().length > 0)
+						{
+							long mms = Long.MAX_VALUE;
+							File latest = null;
+
+							for(File i : clogs.listFiles())
+							{
+								if(Math.abs(i.lastModified() - ms) < mms)
+								{
+									mms = Math.abs(i.lastModified() - ms);
+									latest = i;
+								}
+							}
+
+							crashLog = latest;
+						}
+
+						if(crashLog == null)
+						{
+							File f = new File(minecraftFolder, "logs/latest.log");
+
+							if(f.exists())
+							{
+								crashLog = f;
+							}
+						}
+
+						commander.sendMessage("crashed=" + crashLog == null ? "404" : crashLog.getAbsolutePath());
+					}
+
+					activeProcess = null;
+				}
+
+				catch(InterruptedException e)
+				{
+					e.printStackTrace();
+				}
+			}
+		}).start();
 		return this;
 	}
 
@@ -240,6 +320,9 @@ public class Launcher
 		swapQueues();
 		validateNatives();
 		status("Ready");
+		commander.sendMessage("validated");
+		validated = true;
+
 		return this;
 	}
 
@@ -362,7 +445,7 @@ public class Launcher
 		{
 			JSONObject library = libraries.getJSONObject(i);
 
-			if(library.has("name") && library.has("clientreq") && library.getBoolean("clientreq"))
+			if(library.has("name") && ((library.has("serverreq") && library.getBoolean("serverreq")) || (library.has("clientreq") && library.getBoolean("clientreq"))))
 			{
 				Artifact artifact = new Artifact(library.getString("name"), library.has("url") ? library.getString("url") : Environment.minecraft_repository);
 				File file = artifact.getPath(launcherLibraries);
@@ -583,6 +666,7 @@ public class Launcher
 	{
 		launcherStatus = s;
 		l(s);
+		commander.sendMessage("state=" + s);
 	}
 
 	public String getStatus()
@@ -696,5 +780,165 @@ public class Launcher
 		fos.close();
 
 		return read;
+	}
+
+	public DownloadManager getDownloadManager()
+	{
+		return downloadManager;
+	}
+
+	public Commander getCommander()
+	{
+		return commander;
+	}
+
+	public File getRoot()
+	{
+		return root;
+	}
+
+	public File getLauncherRoot()
+	{
+		return launcherRoot;
+	}
+
+	public File getLauncherLibraries()
+	{
+		return launcherLibraries;
+	}
+
+	public File getLauncherMetadata()
+	{
+		return launcherMetadata;
+	}
+
+	public File getVersionManifestFile()
+	{
+		return versionManifestFile;
+	}
+
+	public File getAuthFolder()
+	{
+		return authFolder;
+	}
+
+	public File getForgeUniversal()
+	{
+		return forgeUniversal;
+	}
+
+	public File getMinecraftVersionFile()
+	{
+		return minecraftVersionFile;
+	}
+
+	public File getForgeVersionFile()
+	{
+		return forgeVersionFile;
+	}
+
+	public File getMinecraftFolder()
+	{
+		return minecraftFolder;
+	}
+
+	public File getNativesFolder()
+	{
+		return nativesFolder;
+	}
+
+	public File getSettingsFile()
+	{
+		return settingsFile;
+	}
+
+	public File getAssetsIndexesFolder()
+	{
+		return assetsIndexesFolder;
+	}
+
+	public File getAssetsObjectsFolder()
+	{
+		return assetsObjectsFolder;
+	}
+
+	public File getAssetsFolder()
+	{
+		return assetsFolder;
+	}
+
+	public JSONObject getAssetManifest()
+	{
+		return assetManifest;
+	}
+
+	public JSONObject getVersionManifest()
+	{
+		return versionManifest;
+	}
+
+	public JSONObject getMinecraftVersion()
+	{
+		return minecraftVersion;
+	}
+
+	public JSONObject getForgeVersion()
+	{
+		return forgeVersion;
+	}
+
+	public String getAssetsIndexId()
+	{
+		return assetsIndexId;
+	}
+
+	public String getLauncherStatus()
+	{
+		return launcherStatus;
+	}
+
+	public String getVersionType()
+	{
+		return versionType;
+	}
+
+	public String getAuthUsername()
+	{
+		return authUsername;
+	}
+
+	public String getAuthUserType()
+	{
+		return authUserType;
+	}
+
+	public String getAuthUUID()
+	{
+		return authUUID;
+	}
+
+	public String getAuthAccessToken()
+	{
+		return authAccessToken;
+	}
+
+	public boolean isAuthenticated()
+	{
+		return authenticated;
+	}
+
+	public boolean isValidated()
+	{
+		return validated;
+	}
+
+	public Process getActiveProcess()
+	{
+		return activeProcess;
+	}
+
+	public String getPlatform()
+	{
+		return platform;
 	}
 }

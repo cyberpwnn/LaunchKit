@@ -10,7 +10,7 @@ public class Environment
 	public static String minecraft_version = "1.12.2";
 
 	// LaunchKit
-	public static String root_folder_name = "LaunchKit";
+	public static String root_folder_name = "lk";
 	public static String remote_path = "user.home";
 	public static boolean local_fs = false;
 	public static int log_level = 2;

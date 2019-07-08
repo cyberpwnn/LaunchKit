@@ -5,17 +5,22 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import org.cyberpwn.launchkit.command.Command;
+import org.cyberpwn.launchkit.command.CommandLaunchkit;
+import org.cyberpwn.launchkit.command.CommandMinecraft;
 import org.cyberpwn.launchkit.util.GList;
 
-public class Commander
+public class Commander extends Thread
 {
 	private GList<Command> commands;
 	private BufferedReader bu;
 
 	public Commander()
 	{
+		commands = new GList<>();
+		commands.add(new CommandLaunchkit());
+		commands.add(new CommandMinecraft());
 		bu = new BufferedReader(new InputStreamReader(System.in));
-
+		start();
 	}
 
 	public void updateProgress(String state, double progress)
@@ -27,6 +32,23 @@ public class Commander
 	public void sendMessage(String message)
 	{
 		System.out.println("@ppm:" + message);
+	}
+
+	@Override
+	public void run()
+	{
+		while(!interrupted())
+		{
+			try
+			{
+				receiveMessage();
+			}
+
+			catch(IOException e)
+			{
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public void receiveMessage() throws IOException

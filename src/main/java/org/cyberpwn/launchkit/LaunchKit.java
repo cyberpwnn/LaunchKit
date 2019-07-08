@@ -6,8 +6,11 @@ import org.cyberpwn.launchkit.util.JSONException;
 
 public class LaunchKit
 {
+	public static Launcher launcher;
+
 	public static void main(String[] a) throws JSONException, InterruptedException, IOException, ClassNotFoundException
 	{
-		new Launcher().validate().launch();
+		launcher = new Launcher();
+		launcher.getCommander().join();
 	}
 }
