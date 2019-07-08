@@ -37,3 +37,13 @@ All messages indended to be listened to are sent with the following format
 ```
 
 For example, `@ppm:hello world` means `hello world`
+
+### Specific Responses to LaunchKit
+
+| Message | Meaning |
+|---------|-------|
+| `@ppm:state=Ready` | This is a state change. This is indended to show up as a minimal status indicator in an interface. |
+| `@ppm:progress=0.264` | LaunchKit is 26.4% done with whatever the last State message was. |
+| `@ppm:crashed=C:/Users/Someone/.../.../crashlog-123.txt` | The client under launchkit has crashed, Launchkit is simply providing the generated crash log. |
+| `@ppm:validated` | This is when launchkit is validated. This is useful when running `/minecraft validate`. |
+| `@ppm:running` | This is when launchkit has bound to the client process and the game is considered running. |
