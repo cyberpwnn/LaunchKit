@@ -47,3 +47,4 @@ For example, `@ppm:hello world` means `hello world`
 | `@ppm:crashed=C:/Users/Someone/.../.../crashlog-123.txt` | The client under launchkit has crashed, Launchkit is simply providing the generated crash log. |
 | `@ppm:validated` | This is when launchkit is validated. This is useful when running `/minecraft validate`. |
 | `@ppm:running` | This is when launchkit has bound to the client process and the game is considered running. |
+| `@ppm:stopped` | This is when the game has stopped. Either by crashing or by your command (`/minecraft stop`) |
