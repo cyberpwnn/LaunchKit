@@ -1,0 +1,99 @@
+{
+    "identity": {
+        "name": "ShadowBeast",
+        "description": "Optional Description",
+        "version": 1000
+    },
+    "game": {
+        "forgeVersion": "14.23.5.2838",
+        "minecraftVersion": "1.12.2"
+    },
+    "profiles": [
+        {
+            "name": "ultra",
+            "launchArgs": [
+                "-Xmx6g",
+                "-Xms1m",
+                "-XX:+UseG1GC",
+                "-XX:+UnlockExperimentalVMOptions",
+                "-XX:MaxGCPauseMillis=12",
+                "-XX:+DisableExplicitGC",
+                "-XX:+ParallelRefProcEnabled",
+                "-XX:ParallelGCThreads=16",
+                "-XX:ConcGCThreads=6",
+                "-XX:G1HeapWastePercent=15"
+            ],
+            "activation": [
+                "system_memory_gb > 8",
+                "cpu_base_mhz > 3000",
+                "cpu_threads >= 8"
+            ]
+        },
+        {
+            "name": "potato",
+            "launchArgs": [
+                "-Xmx4g",
+                "-Xms1m",
+                "-XX:+UseG1GC",
+                "-XX:+UnlockExperimentalVMOptions",
+                "-XX:MaxGCPauseMillis=15",
+                "-XX:+DisableExplicitGC",
+                "-XX:+ParallelRefProcEnabled",
+                "-XX:ParallelGCThreads=8",
+                "-XX:ConcGCThreads=3",
+                "-XX:G1HeapWastePercent=9"
+            ]
+        }
+    ],
+    "install": [
+        {
+            "download": "https://www.curseforge.com/minecraft/mc-mods/ender-io/download/2732703/file",
+            "location": "mods"
+        },
+        {
+            "download": "https://optifine.net/downloadx?f=OptiFine_1.12.2_HD_U_E3.jar&x=eb4aab577510d9dface5de7be27b9dc8",
+            "location": "mods"
+        },
+        {
+            "download": "https://www.curseforge.com/minecraft/mc-mods/dynamic-surroundings/download/2664392/file",
+            "location": "mods",
+            "activation": "ultra|default"
+        },
+        {
+            "download": "https://www.curseforge.com/minecraft/mc-mods/foamfix-for-minecraft/download/2695388/file",
+            "location": "mods"
+        },
+        {
+            "download": "https://githubusercontent.github.com/SomeUser/SomeRepo/bunch-o-mods.zip",
+            "extract": true,
+            "location": "mods"
+        },
+        {
+            "download": "https://githubusercontent.github.com/SomeUser/SomeRepo/normal-pack.zip",
+            "location": "resourcepacks",
+            "activation": "default|potato"
+        },
+        {
+            "download": "https://githubusercontent.github.com/SomeUser/SomeRepo/ultra-pack.zip",
+            "location": "resourcepacks",
+            "activation": "ultra"
+        },
+        {
+            "download": "https://githubusercontent.github.com/SomeUser/SomeRepo/base-configs.zip",
+            "extract": true,
+            "location": "config"
+        },
+        {
+            "download": "https://githubusercontent.github.com/SomeUser/SomeRepo/low-configs.zip",
+            "extract": true,
+            "location": "config",
+            "activation": "potato"
+        },
+        {
+            "download": "https://githubusercontent.github.com/SomeUser/SomeRepo/ultra-configs.zip",
+            "location": "config",
+            "extract": true,
+            "activation": "ultra"
+        }
+    ]
+}
