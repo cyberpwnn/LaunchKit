@@ -54,20 +54,20 @@
         },
         {
             "download": "https://optifine.net/downloadx?f=OptiFine_1.12.2_HD_U_E3.jar&x=eb4aab577510d9dface5de7be27b9dc8",
-            "location": "mods"
+            "location": "mods",
             "type": "jar",
             "name": "Optifine"
         },
         {
             "download": "https://www.curseforge.com/minecraft/mc-mods/dynamic-surroundings/download/2664392/file",
             "location": "mods",
-            "activation": "ultra|default"
+            "activation": "ultra|default",
             "type": "jar",
             "name": "DynamicSurroundings"
         },
         {
             "download": "https://www.curseforge.com/minecraft/mc-mods/foamfix-for-minecraft/download/2695388/file",
-            "location": "mods"
+            "location": "mods",
             "type": "jar",
             "name": "FoamFix"
         },
