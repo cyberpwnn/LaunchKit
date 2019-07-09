@@ -181,9 +181,9 @@ public class Launcher
 		t = filter(t, "user_type", authenticated ? authUserType : "mojang");
 		t = filter(t, "version_type", versionType);
 		parameters.add(javaw());
-		parameters.add("-Xmx" + o.getString("jvm.memory.max"));
-		parameters.add("-Xms" + o.getString("jvm.memory.min"));
-		parameters.add(o.getString("jvm.opts").trim().split("\\Q \\E"));
+		parameters.add("-Xmx" + (Environment.override_config ? Environment.jvm_memory_max : o.getString("jvm.memory.max")));
+		parameters.add("-Xms" + (Environment.override_config ? Environment.jvm_memory_min : o.getString("jvm.memory.min")));
+		parameters.add((Environment.override_config ? Environment.jvm_opts : o.getString("jvm.opts")).trim().split("\\Q \\E"));
 		parameters.add("-Djava.library.path=" + nativesFolder.getAbsolutePath());
 		parameters.add("-Dorg.lwjgl.librarypath=" + nativesFolder.getAbsolutePath());
 		parameters.add("-Dnet.java.games.input.librarypath=" + nativesFolder.getAbsolutePath());
