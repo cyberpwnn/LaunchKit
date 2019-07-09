@@ -47,6 +47,12 @@
     ],
     "install": [
         {
+            "download": "https://www.curseforge.com/minecraft/mc-mods/endercore/download/2732682/file",
+            "location": "mods",
+            "type": "jar",
+            "name": "EnderIo"
+        },
+        {
             "download": "https://www.curseforge.com/minecraft/mc-mods/ender-io/download/2732703/file",
             "location": "mods",
             "type": "jar",
@@ -71,42 +77,6 @@
             "location": "mods",
             "type": "jar",
             "name": "FoamFix"
-        },
-        {
-            "download": "https://githubusercontent.github.com/SomeUser/SomeRepo/bunch-o-mods.zip",
-            "hint": "extract",
-            "location": "mods"
-        },
-        {
-            "download": "https://githubusercontent.github.com/SomeUser/SomeRepo/normal-pack.zip",
-            "location": "resourcepacks",
-            "activation": "default|potato",
-            "type": "zip",
-            "name": "pack"
-        },
-        {
-            "download": "https://githubusercontent.github.com/SomeUser/SomeRepo/ultra-pack.zip",
-            "location": "resourcepacks",
-            "activation": "ultra",
-            "type": "zip",
-            "name": "pack"
-        },
-        {
-            "download": "https://githubusercontent.github.com/SomeUser/SomeRepo/base-configs.zip",
-            "hint": "extract",
-            "location": "config"
-        },
-        {
-            "download": "https://githubusercontent.github.com/SomeUser/SomeRepo/low-configs.zip",
-            "hint": "extract",
-            "location": "config",
-            "activation": "potato"
-        },
-        {
-            "download": "https://githubusercontent.github.com/SomeUser/SomeRepo/ultra-configs.zip",
-            "location": "config",
-            "hint": "extract",
-            "activation": "ultra"
         }
     ]
 }
