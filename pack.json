@@ -2,7 +2,7 @@
     "identity": {
         "name": "ShadowBeast",
         "description": "Optional Description",
-        "version": "1006"
+        "version": "1007"
     },
     "game": {
         "forgeVersion": "14.23.5.2838",
@@ -50,7 +50,7 @@
             "download": "https://www.curseforge.com/minecraft/mc-mods/endercore/download/2732682/file",
             "location": "mods",
             "type": "jar",
-            "name": "EnderIo"
+            "name": "EnderCore"
         },
         {
             "download": "https://www.curseforge.com/minecraft/mc-mods/ender-io/download/2732703/file",
