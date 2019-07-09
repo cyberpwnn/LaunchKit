@@ -2,7 +2,7 @@
     "identity": {
         "name": "ShadowBeast",
         "description": "Optional Description",
-        "version": 1002
+        "version": 1003
     },
     "game": {
         "forgeVersion": "14.23.5.2838",
@@ -53,8 +53,9 @@
             "name": "EnderIo"
         },
         {
-            "download": "https://optifine.net/downloadx?f=OptiFine_1.12.2_HD_U_E3.jar&x=eb4aab577510d9dface5de7be27b9dc8",
+            "download": "https://optifine.net/adloadx?f=OptiFine_1.12.2_HD_U_E3.jar",
             "location": "mods",
+            "hint": "optifine",
             "type": "jar",
             "name": "Optifine"
         },
@@ -73,7 +74,7 @@
         },
         {
             "download": "https://githubusercontent.github.com/SomeUser/SomeRepo/bunch-o-mods.zip",
-            "extract": true,
+            "hint": "extract",
             "location": "mods"
         },
         {
@@ -92,19 +93,19 @@
         },
         {
             "download": "https://githubusercontent.github.com/SomeUser/SomeRepo/base-configs.zip",
-            "extract": true,
+            "hint": "extract",
             "location": "config"
         },
         {
             "download": "https://githubusercontent.github.com/SomeUser/SomeRepo/low-configs.zip",
-            "extract": true,
+            "hint": "extract",
             "location": "config",
             "activation": "potato"
         },
         {
             "download": "https://githubusercontent.github.com/SomeUser/SomeRepo/ultra-configs.zip",
             "location": "config",
-            "extract": true,
+            "hint": "extract",
             "activation": "ultra"
         }
     ]
