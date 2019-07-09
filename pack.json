@@ -2,7 +2,7 @@
     "identity": {
         "name": "ShadowBeast",
         "description": "Optional Description",
-        "version": 1005
+        "version": 1006
     },
     "game": {
         "forgeVersion": "14.23.5.2838",
