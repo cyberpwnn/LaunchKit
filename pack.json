@@ -1,0 +1,82 @@
+{
+    "identity": {
+        "name": "ShadowBeast",
+        "description": "Optional Description",
+        "version": "1007"
+    },
+    "game": {
+        "forgeVersion": "14.23.5.2838",
+        "minecraftVersion": "1.12.2"
+    },
+    "profiles": [
+        {
+            "name": "ultra",
+            "launchArgs": [
+                "-Xmx6g",
+                "-Xms1m",
+                "-XX:+UseG1GC",
+                "-XX:+UnlockExperimentalVMOptions",
+                "-XX:MaxGCPauseMillis=12",
+                "-XX:+DisableExplicitGC",
+                "-XX:+ParallelRefProcEnabled",
+                "-XX:ParallelGCThreads=16",
+                "-XX:ConcGCThreads=6",
+                "-XX:G1HeapWastePercent=15"
+            ],
+            "activation": [
+                "free_system_memory >= 8000",
+                "cpu_threads >= 8",
+                "free_space > 1000"
+            ]
+        },
+        {
+            "name": "potato",
+            "launchArgs": [
+                "-Xmx4g",
+                "-Xms1m",
+                "-XX:+UseG1GC",
+                "-XX:+UnlockExperimentalVMOptions",
+                "-XX:MaxGCPauseMillis=15",
+                "-XX:+DisableExplicitGC",
+                "-XX:+ParallelRefProcEnabled",
+                "-XX:ParallelGCThreads=8",
+                "-XX:ConcGCThreads=3",
+                "-XX:G1HeapWastePercent=9"
+            ]
+        }
+    ],
+    "install": [
+        {
+            "download": "https://www.curseforge.com/minecraft/mc-mods/endercore/download/2732682/file",
+            "location": "mods",
+            "type": "jar",
+            "name": "EnderCore"
+        },
+        {
+            "download": "https://www.curseforge.com/minecraft/mc-mods/ender-io/download/2732703/file",
+            "location": "mods",
+            "type": "jar",
+            "name": "EnderIo"
+        },
+        {
+            "download": "https://optifine.net/adloadx?f=OptiFine_1.12.2_HD_U_E3.jar",
+            "location": "mods",
+            "hint": "optifine",
+            "type": "jar",
+            "name": "Optifine"
+        },
+        {
+            "download": "https://www.curseforge.com/minecraft/mc-mods/dynamic-surroundings/download/2664392/file",
+            "location": "mods",
+            "activation": "ultra|default",
+            "type": "jar",
+            "name": "DynamicSurroundings"
+        },
+        {
+            "download": "https://www.curseforge.com/minecraft/mc-mods/foamfix-for-minecraft/download/2695388/file",
+            "location": "mods",
+            "type": "jar",
+            "name": "FoamFix"
+        }
+    ]
+}
