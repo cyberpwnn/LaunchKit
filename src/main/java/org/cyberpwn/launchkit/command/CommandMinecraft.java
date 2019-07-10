@@ -22,6 +22,19 @@ public class CommandMinecraft implements Command
 				sender.sendMessage("stopped");
 			}
 
+			else if(args[0].equals("invalidate"))
+			{
+				try
+				{
+					LaunchKit.launcher.invalidate();
+				}
+
+				catch(Throwable e)
+				{
+					e.printStackTrace();
+				}
+			}
+
 			else if(args[0].equals("validate"))
 			{
 				try

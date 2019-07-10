@@ -51,7 +51,7 @@ public class Environment
 	public static String minecraft_version = "1.12.2";
 
 	// LaunchKit
-	public static String root_folder_name = "lk";
+	public static String root_folder_name = "LaunchKit";
 	public static String remote_path = "user.home";
 	public static boolean local_fs = false;
 	public static int log_level = 2;
@@ -62,6 +62,11 @@ public class Environment
 	public static String jvm_memory_min = "1m";
 	public static String jvm_memory_max = "1g";
 	public static boolean override_config = false;
+	public static boolean clean_logs = true;
+
+	// Pack
+	public static String pack = "https://raw.githubusercontent.com/cyberpwnn/LaunchKit/master/pack.json";
+	public static String profile = "auto";
 
 	// URLs
 	public static String url_asset_download = "http://resources.download.minecraft.net/{microhash}/{hash}";

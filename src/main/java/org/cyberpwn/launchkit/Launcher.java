@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -16,16 +18,27 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
+import javax.net.ssl.HttpsURLConnection;
+
 import org.cyberpwn.launchkit.net.DownloadManager;
+import org.cyberpwn.launchkit.pack.Pack;
+import org.cyberpwn.launchkit.pack.PackInstall;
+import org.cyberpwn.launchkit.pack.PackProfile;
 import org.cyberpwn.launchkit.util.Artifact;
+import org.cyberpwn.launchkit.util.Comp;
 import org.cyberpwn.launchkit.util.GList;
+import org.cyberpwn.launchkit.util.GMap;
 import org.cyberpwn.launchkit.util.JSONArray;
 import org.cyberpwn.launchkit.util.JSONException;
 import org.cyberpwn.launchkit.util.JSONObject;
+import org.cyberpwn.launchkit.util.L;
 import org.cyberpwn.launchkit.util.M;
 import org.cyberpwn.launchkit.util.OSF;
+import org.cyberpwn.launchkit.util.Platform;
 import org.cyberpwn.launchkit.util.StreamGobbler;
+import org.cyberpwn.launchkit.util.UniversalParser;
 import org.cyberpwn.launchkit.util.VIO;
+import org.zeroturnaround.zip.ZipUtil;
 
 import com.google.common.collect.Lists;
 
@@ -45,6 +58,10 @@ public class Launcher
 	private final File minecraftFolder;
 	private final File nativesFolder;
 	private final File settingsFile;
+	private final File packFile;
+	private final File packFileEffective;
+	private final File downloadCache;
+	private final File packFileNew;
 	private File assetsIndexesFolder;
 	private File assetsObjectsFolder;
 	private File assetsFolder;
@@ -59,6 +76,7 @@ public class Launcher
 	private String authUserType;
 	private String authUUID;
 	private String authAccessToken;
+	private PackProfile profile;
 	private boolean authenticated;
 	private boolean validated;
 	private Process activeProcess;
@@ -75,17 +93,21 @@ public class Launcher
 		launcherLibraries = new File(launcherRoot, "libraries");
 		launcherMetadata = new File(launcherRoot, "metadata");
 		nativesFolder = new File(launcherRoot, "natives");
+		packFile = new File(launcherMetadata, "pack-meta.json");
+		packFileNew = new File(launcherMetadata, "pack-live.json");
+		packFileEffective = new File(launcherMetadata, "pack-effective.json");
 		forgeUniversal = new File(launcherLibraries, "net/minecraftforge/forge/" + Environment.minecraft_version + "/" + Environment.forge_version + "/forge-" + Environment.minecraft_version + "-" + Environment.forge_version + "-universal.jar");
 		versionManifestFile = new File(launcherMetadata, "version-manifest.json");
 		forgeVersionFile = new File(launcherMetadata, "forge-" + Environment.minecraft_version + "-" + Environment.forge_version + ".json");
 		minecraftVersionFile = new File(launcherMetadata, "minecraft-" + Environment.minecraft_version + ".json");
 		minecraftFolder = new File(root, ".minecraft");
 		assetsFolder = new File(minecraftFolder, "assets");
+		downloadCache = new File(launcherRoot, "cache");
 		assetsObjectsFolder = new File(assetsFolder, "objects");
 		assetsIndexesFolder = new File(assetsFolder, "indexes");
 		authFolder = new File(launcherRoot, "auth");
 		settingsFile = new File(root, "launch-settings.json");
-		downloadManager = new DownloadManager();
+		downloadManager = new DownloadManager(downloadCache);
 		setFolderVisibility(launcherRoot, true);
 		validated = false;
 	}
@@ -159,13 +181,9 @@ public class Launcher
 		return this;
 	}
 
-	public Launcher launch() throws JSONException, IOException, InterruptedException
+	public Launcher launch() throws JSONException, IOException, InterruptedException, IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, SecurityException
 	{
-		if(!validated)
-		{
-			validate();
-		}
-
+		validate();
 		JSONObject o = new JSONObject(VIO.readAll(settingsFile));
 		l("Using Java at " + javaw());
 		GList<String> parameters = new GList<>();
@@ -181,9 +199,21 @@ public class Launcher
 		t = filter(t, "user_type", authenticated ? authUserType : "mojang");
 		t = filter(t, "version_type", versionType);
 		parameters.add(javaw());
-		parameters.add("-Xmx" + (Environment.override_config ? Environment.jvm_memory_max : o.getString("jvm.memory.max")));
-		parameters.add("-Xms" + (Environment.override_config ? Environment.jvm_memory_min : o.getString("jvm.memory.min")));
-		parameters.add((Environment.override_config ? Environment.jvm_opts : o.getString("jvm.opts")).trim().split("\\Q \\E"));
+
+		if(profile != null && !profile.getLaunchArgs().isEmpty())
+		{
+			v("Using Profile varargs");
+			parameters.addAll(profile.getLaunchArgs());
+		}
+
+		else
+		{
+			w("Profile " + profile.getName() + " does not contain launch args. Using config/environment args.");
+			parameters.add("-Xmx" + (Environment.override_config ? Environment.jvm_memory_max : o.getString("jvm.memory.max")));
+			parameters.add("-Xms" + (Environment.override_config ? Environment.jvm_memory_min : o.getString("jvm.memory.min")));
+			parameters.add((Environment.override_config ? Environment.jvm_opts : o.getString("jvm.opts")).trim().split("\\Q \\E"));
+		}
+
 		parameters.add("-Djava.library.path=" + nativesFolder.getAbsolutePath());
 		parameters.add("-Dorg.lwjgl.librarypath=" + nativesFolder.getAbsolutePath());
 		parameters.add("-Dnet.java.games.input.librarypath=" + nativesFolder.getAbsolutePath());
@@ -302,11 +332,12 @@ public class Launcher
 		return template.replace("${" + parameter + "}", value);
 	}
 
-	public Launcher validate() throws InterruptedException, ZipException, IOException
+	public Launcher validate() throws InterruptedException, ZipException, IOException, IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, SecurityException, JSONException
 	{
 		status("Validating Launch");
 		validateVersionManifest();
 		validateForgeUniversal();
+		validatePackMeta();
 		swapQueues();
 		findMinecraftVersion();
 		extractForgeManifest();
@@ -317,13 +348,354 @@ public class Launcher
 		validateForgeLibraries();
 		validateMinecraftConfiguration();
 		validateSettings();
+		validatePack();
 		swapQueues();
 		validateNatives();
+		validateCleaning();
 		status("Ready");
 		commander.sendMessage("validated");
 		validated = true;
 
 		return this;
+	}
+
+	public void invalidate()
+	{
+		VIO.delete(launcherRoot);
+		VIO.delete(minecraftFolder);
+	}
+
+	private void validateCleaning()
+	{
+		if(Environment.clean_logs)
+		{
+			VIO.delete(new File(minecraftFolder, "crafttweaker.log"));
+			VIO.delete(new File(minecraftFolder, "config"));
+			VIO.delete(new File(minecraftFolder, "crash-reports"));
+		}
+	}
+
+	private void validatePack() throws IOException, IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, SecurityException, JSONException
+	{
+		boolean update = false;
+		boolean revertOld = false;
+		Pack newPack = null;
+
+		if(!packFile.exists())
+		{
+			if(packFileNew.exists())
+			{
+				update = true;
+				Files.copy(packFileNew.toPath(), packFile.toPath());
+			}
+		}
+
+		if(!packFile.exists())
+		{
+			f("No Pack File!");
+			return;
+		}
+
+		JSONObject jold = null;
+		JSONObject jnew = null;
+		jold = new JSONObject(VIO.readAll(packFile));
+		newPack = UniversalParser.fromJSON(jnew = new JSONObject(VIO.readAll(packFileNew)), Pack.class);
+		VIO.writeAll(packFileEffective, UniversalParser.toJSON(newPack).toString(4));
+		v("Pack: " + newPack.getIdentity().getName() + " version " + newPack.getIdentity().getVersion());
+		if(newPack.getGame().getForgeVersion().equals("no"))
+		{
+			Environment.forge_enabled = false;
+		}
+
+		else
+		{
+			Environment.forge_enabled = true;
+			Environment.forge_version = newPack.getGame().getForgeVersion();
+		}
+
+		Environment.minecraft_version = newPack.getGame().getMinecraftVersion();
+		File f = new File(launcherMetadata, "profile.info");
+		String oldProfile = "unidentified";
+
+		if(f.exists())
+		{
+			oldProfile = VIO.readAll(f).trim();
+		}
+
+		computeProfile(newPack);
+		String newProfile = profile.getName().trim();
+
+		if(!oldProfile.equals(newProfile))
+		{
+			update = true;
+			revertOld = true;
+		}
+
+		if(!update)
+		{
+			if(jold.toString().equals(jnew.toString()))
+			{
+				l("Pack Update Detected!");
+				update = true;
+				revertOld = true;
+			}
+		}
+
+		if(update)
+		{
+			if(revertOld)
+			{
+				revertForUpdate();
+			}
+
+			l("Validating Pack Install");
+			validatePackInstall(newPack);
+		}
+	}
+
+	private void validatePackInstall(Pack newPack)
+	{
+		GList<String> resourcepacks = new GList<>();
+		for(PackInstall i : newPack.getInstall())
+		{
+			if(i.shouldActivate(profile.getName()))
+			{
+				v("Install " + i.getDownload() + " into " + i.getLocation());
+				String name = i.getName().trim().isEmpty() ? UUID.randomUUID().toString().split("\\Q-\\E")[0] : i.getName();
+				String fullname = i.getType().trim().isEmpty() ? name : name + "." + i.getType();
+				File bsa = new File(minecraftFolder, i.getLocation());
+				File f = new File(bsa, fullname);
+				bsa.mkdirs();
+				String u = i.getDownload();
+
+				if(i.getHint().contains("resourcepack"))
+				{
+					resourcepacks.add(f.getName());
+				}
+
+				if(i.getHint().contains("optifine"))
+				{
+					try
+					{
+
+						URL url = new URL(i.getDownload());
+						HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+						con.setRequestMethod("GET");
+						con.setRequestProperty("Content-Type", "application/json");
+						con.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36");
+
+						InputStream in = con.getInputStream();
+						String html = VIO.readAll(in);
+						in.close();
+
+						for(String line : html.split("\\Q\n\\E"))
+						{
+							if(line.trim().startsWith("<a href='downloadx?f=OptiFine_"))
+							{
+								u = "https://optifine.net/" + line.trim().replaceAll("\\Q<a href='\\E", "").split("\\Q'\\E")[0].trim();
+								break;
+							}
+						}
+					}
+
+					catch(Throwable e)
+					{
+						e.printStackTrace();
+					}
+				}
+
+				downloadManager.downloadCached(u, f, -1, new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						L.LOG.v("Downloaded " + i.getDownload() + " to " + f.getPath());
+
+						if(i.getHint().contains("extract"))
+						{
+							v("Extracting " + f.getPath() + "'s contents into " + bsa.getPath());
+							ZipUtil.unpack(f, bsa);
+						}
+					}
+				});
+			}
+		}
+
+		if(!resourcepacks.isEmpty())
+		{
+			String p = "resourcePacks:" + resourcepacks.toJSONStringArray().toString(0);
+			File f = new File(minecraftFolder, "options.txt");
+
+			if(!f.exists())
+			{
+				try
+				{
+					VIO.writeAll(f, p + "\n");
+				}
+
+				catch(IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
+
+			else
+			{
+				try
+				{
+					GList<String> m = new GList<String>(VIO.readAll(f).split("\\Q\n\\E"));
+
+					for(String i : m.copy())
+					{
+						if(i.startsWith("resourcePacks:"))
+						{
+							m.remove(i);
+						}
+					}
+
+					m.add(p);
+					m.reverse();
+					VIO.writeAll(f, m.toString("\n"));
+				}
+
+				catch(IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	private void revertForUpdate()
+	{
+		VIO.delete(new File(minecraftFolder, "resourcepacks"));
+		VIO.delete(new File(minecraftFolder, "shaderpacks"));
+		VIO.delete(new File(minecraftFolder, "config"));
+		VIO.delete(new File(minecraftFolder, "mods"));
+		VIO.delete(new File(minecraftFolder, "resourcepacks"));
+	}
+
+	private void computeProfile(Pack newPack)
+	{
+		if(!Environment.profile.equals("auto"))
+		{
+			w("Not computing profile, environment profile != auto");
+			return;
+		}
+
+		if(newPack.getProfiles().isEmpty())
+		{
+			profile = new PackProfile("noprofile");
+		}
+
+		for(PackProfile i : newPack.getProfiles())
+		{
+			if(canBeActivated(i.getName(), i.getActivation()))
+			{
+				profile = i;
+				v("Selected Profile: " + i.getName());
+				break;
+			}
+		}
+	}
+
+	private boolean canBeActivated(String name, List<String> activation)
+	{
+		if(activation.isEmpty())
+		{
+			return true;
+		}
+
+		boolean fail = false;
+		GMap<String, Double> mappers = new GMap<>();
+		mappers.put("total_system_memory", (double) Platform.MEMORY.PHYSICAL.getTotalMemory() / 1024D / 1024D);
+		mappers.put("free_system_memory", (double) Platform.MEMORY.PHYSICAL.getFreeMemory() / 1024D / 1024D);
+		mappers.put("used_system_memory", (double) Platform.MEMORY.PHYSICAL.getUsedMemory() / 1024D / 1024D);
+		mappers.put("cpu_threads", (double) Platform.CPU.getAvailableProcessors());
+		mappers.put("free_space", (double) Platform.STORAGE.getFreeSpace(root) / 1024D / 1024D);
+
+		GMap<String, Comp> functions = new GMap<>();
+		functions.put("==", (a, b) -> a == b);
+		functions.put(">=", (a, b) -> a >= b);
+		functions.put("<=", (a, b) -> a <= b);
+		functions.put("!=", (a, b) -> a != b);
+		functions.put(">", (a, b) -> a > b);
+		functions.put("<", (a, b) -> a < b);
+
+		activating: for(String i : activation)
+		{
+			for(String j : functions.k())
+			{
+				if(i.contains(" " + j + " "))
+				{
+					Comp func = functions.get(j);
+					String k = i.split("\\Q " + j + " \\E")[0].trim().toLowerCase();
+					String v = i.split("\\Q " + j + " \\E")[1].trim().toLowerCase();
+
+					if(mappers.containsKey(k))
+					{
+						try
+						{
+							double a = mappers.get(k);
+							double b = Double.valueOf(v);
+
+							if(func.compare(a, b))
+							{
+								l("System qualifies for " + name + "/" + i + " (" + a + ")");
+							}
+
+							else
+							{
+								fail = true;
+								l("System does NOT qualify for profile " + name + " because of " + i + " (" + a + ")");
+							}
+						}
+
+						catch(Throwable e)
+						{
+							w("Invalid Activator Value: " + v);
+							continue activating;
+						}
+					}
+
+					else
+					{
+						w("Invalid Activator: " + k);
+						continue activating;
+					}
+
+					continue activating;
+				}
+			}
+		}
+
+		return !fail;
+	}
+
+	private void validatePackMeta()
+	{
+		packFileNew.delete();
+
+		File o = new File(root, "override-pack.json");
+		if(o.exists())
+		{
+			try
+			{
+				Files.copy(o.toPath(), packFileNew.toPath());
+				w("Using override-pack pack as update pack.json.");
+				w("To support downloading remote pack json files, delete this file.");
+			}
+
+			catch(IOException e)
+			{
+				e.printStackTrace();
+			}
+		}
+
+		else
+		{
+			downloadManager.download(Environment.pack, packFileNew);
+		}
 	}
 
 	private String javaw()
