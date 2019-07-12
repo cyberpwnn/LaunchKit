@@ -17,12 +17,12 @@ public class CommandLaunchkit implements Command
 	{
 		if(args.length >= 1)
 		{
-			if(args[0].equals("stop"))
+			if(args[0].equals("stop") || args[0].equals("kill") || args[0].equals("exit"))
 			{
 				System.exit(0);
 			}
 
-			if(args[0].equals("env"))
+			if(args[0].equals("env") || args[0].equals("set"))
 			{
 				if(args.length >= 3)
 				{
@@ -33,5 +33,11 @@ public class CommandLaunchkit implements Command
 				}
 			}
 		}
+	}
+
+	@Override
+	public GList<String> getAliases()
+	{
+		return new GList<String>().qadd("lk");
 	}
 }

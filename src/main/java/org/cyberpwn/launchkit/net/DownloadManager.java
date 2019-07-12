@@ -183,7 +183,7 @@ public class DownloadManager
 
 	private long getChronoSegment()
 	{
-		return M.ms() / 1000 / 60 / 60 / 6;
+		return M.ms() / 1000 / 60 / 60 / 24 / 7;
 	}
 
 	public void download(String url, File file, long length, Runnable r)

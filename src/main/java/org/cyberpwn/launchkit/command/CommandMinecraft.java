@@ -1,7 +1,10 @@
 package org.cyberpwn.launchkit.command;
 
+import java.io.IOException;
+
 import org.cyberpwn.launchkit.Commander;
 import org.cyberpwn.launchkit.LaunchKit;
+import org.cyberpwn.launchkit.util.GList;
 
 public class CommandMinecraft implements Command
 {
@@ -16,7 +19,7 @@ public class CommandMinecraft implements Command
 	{
 		if(args.length >= 1)
 		{
-			if(args[0].equals("stop"))
+			if(args[0].equals("stop") || args[0].equals("exit") || args[0].equals("kill"))
 			{
 				LaunchKit.launcher.killGame();
 				sender.sendMessage("stopped");
@@ -35,7 +38,7 @@ public class CommandMinecraft implements Command
 				}
 			}
 
-			else if(args[0].equals("validate"))
+			else if(args[0].equals("validate") || args[0].equals("update"))
 			{
 				try
 				{
@@ -48,7 +51,7 @@ public class CommandMinecraft implements Command
 				}
 			}
 
-			else if(args[0].equals("start"))
+			else if(args[0].equals("start") || args[0].equals("launch"))
 			{
 				try
 				{
@@ -60,6 +63,58 @@ public class CommandMinecraft implements Command
 					e.printStackTrace();
 				}
 			}
+
+			else if(args[0].equals("authenticate") || args[0].equals("auth"))
+			{
+				if(args.length == 1)
+				{
+					try
+					{
+						LaunchKit.launcher.authenticateWithToken();
+					}
+
+					catch(ClassNotFoundException | IOException e)
+					{
+						e.printStackTrace();
+					}
+				}
+
+				else if(args.length == 3)
+				{
+					try
+					{
+						for(int i = 0; i < 300; i++)
+						{
+							System.out.println("       ");
+						}
+
+						LaunchKit.launcher.authenticateWithCredentials(args[1], args[2]);
+					}
+
+					catch(ClassNotFoundException | IOException e)
+					{
+						e.printStackTrace();
+					}
+				}
+
+				else if(args.length == 5)
+				{
+					LaunchKit.launcher.authenticateExternal(args[1], args[2], args[3], args[4]);
+				}
+
+				else
+				{
+					System.out.println("Use /mc auth (for token use)");
+					System.out.println("Or  /mc auth <user> <pass> (for credentials)");
+					System.out.println("Or  /mc auth <profilename> <profiletype> <uuid> <accesstoken> (for external)");
+				}
+			}
 		}
+	}
+
+	@Override
+	public GList<String> getAliases()
+	{
+		return new GList<String>().qadd("mc");
 	}
 }

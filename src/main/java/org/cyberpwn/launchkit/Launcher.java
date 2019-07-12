@@ -119,6 +119,7 @@ public class Launcher
 		authUserType = profileType;
 		authUUID = uuid;
 		authAccessToken = accessToken;
+		L.LOG.l("Authentication from external sources cannot be checked. They will be passed to the client only.");
 		return this;
 	}
 
@@ -130,6 +131,7 @@ public class Launcher
 		{
 			case FAILED:
 				authenticated = false;
+				L.LOG.w("Authentication FAILED");
 				break;
 			case SUCCESS:
 				authenticated = true;
@@ -137,6 +139,7 @@ public class Launcher
 				authUserType = a.getProfileType();
 				authUUID = a.getUuid();
 				authAccessToken = a.getAccessToken();
+				L.LOG.l("Authentication SUCCESS! You can now use /mc auth next time instead of passing credentials again.");
 				break;
 			default:
 				break;
@@ -153,6 +156,7 @@ public class Launcher
 		{
 			case FAILED:
 				authenticated = false;
+				L.LOG.w("Authentication FAILED");
 				break;
 			case SUCCESS:
 				authenticated = true;
@@ -160,6 +164,7 @@ public class Launcher
 				authUserType = a.getProfileType();
 				authUUID = a.getUuid();
 				authAccessToken = a.getAccessToken();
+				L.LOG.l("Authentication SUCCESS!");
 				break;
 			default:
 				break;
@@ -184,6 +189,24 @@ public class Launcher
 	public Launcher launch() throws JSONException, IOException, InterruptedException, IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, SecurityException
 	{
 		validate();
+
+		if(!authenticated)
+		{
+			w("Game is not authenticated.");
+			w("Attempting to authenticate with token");
+			w("If there is no access token, or authentication fails, Minecraft will be launched in offline mode.");
+
+			try
+			{
+				authenticateWithToken();
+			}
+
+			catch(ClassNotFoundException e)
+			{
+
+			}
+		}
+
 		JSONObject o = new JSONObject(VIO.readAll(settingsFile));
 		l("Using Java at " + javaw());
 		GList<String> parameters = new GList<>();
@@ -431,6 +454,23 @@ public class Launcher
 			revertOld = true;
 		}
 
+		try
+		{
+			Pack oldPack = UniversalParser.fromJSON(jold, Pack.class);
+
+			if(newPack.getIdentity().getVersion() > oldPack.getIdentity().getVersion())
+			{
+				w("Pack Upgrade, Clearing Download Caches");
+				VIO.delete(downloadCache);
+				downloadCache.mkdirs();
+			}
+		}
+
+		catch(Throwable e)
+		{
+
+		}
+
 		if(!update)
 		{
 			if(jold.toString().equals(jnew.toString()))
@@ -580,6 +620,31 @@ public class Launcher
 		if(!Environment.profile.equals("auto"))
 		{
 			w("Not computing profile, environment profile != auto");
+			if(newPack.getProfiles().isEmpty())
+			{
+				profile = new PackProfile("noprofile");
+			}
+
+			boolean found = false;
+
+			for(PackProfile i : newPack.getProfiles())
+			{
+				if(i.getName().equals(Environment.profile))
+				{
+					profile = i;
+					v("Selected Profile: " + i.getName());
+					found = true;
+					break;
+				}
+			}
+
+			if(!found)
+			{
+				w("Could not locate profile " + Environment.profile);
+				w("Choosing the first profile: " + newPack.getProfiles().get(0).getName());
+				profile = newPack.getProfiles().get(0);
+			}
+
 			return;
 		}
 

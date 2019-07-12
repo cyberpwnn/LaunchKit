@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import org.cyberpwn.launchkit.command.Command;
+import org.cyberpwn.launchkit.command.CommandExit;
 import org.cyberpwn.launchkit.command.CommandLaunchkit;
 import org.cyberpwn.launchkit.command.CommandMinecraft;
 import org.cyberpwn.launchkit.util.GList;
@@ -19,6 +20,7 @@ public class Commander extends Thread
 		commands = new GList<>();
 		commands.add(new CommandLaunchkit());
 		commands.add(new CommandMinecraft());
+		commands.add(new CommandExit());
 		bu = new BufferedReader(new InputStreamReader(System.in));
 		start();
 	}
@@ -70,7 +72,7 @@ public class Commander extends Thread
 
 			for(Command i : commands)
 			{
-				if(i.getName().equalsIgnoreCase(node))
+				if(i.getName().equalsIgnoreCase(node) || i.getAliases().contains(node.toLowerCase()))
 				{
 					i.handle(this, args);
 					break;
