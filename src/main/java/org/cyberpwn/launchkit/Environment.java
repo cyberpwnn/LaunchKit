@@ -55,13 +55,13 @@ public class Environment
 	public static String remote_path = "user.home";
 	public static boolean local_fs = false;
 	public static int log_level = 2;
-	public static int download_threads = 8;
+	public static boolean debug_launchparams = false;
+	public static int download_threads = 4;
 
 	// Client Process
 	public static String jvm_opts = "-XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -XX:MaxGCPauseMillis=15 -XX:+DisableExplicitGC -XX:+ParallelRefProcEnabled -XX:ParallelGCThreads=8 -XX:ConcGCThreads=3 -XX:G1HeapWastePercent=9";
 	public static String jvm_memory_min = "1m";
 	public static String jvm_memory_max = "1g";
-	public static boolean override_config = false;
 	public static boolean clean_logs = true;
 
 	// Pack

@@ -2,6 +2,8 @@ package org.cyberpwn.launchkit.util;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -17,6 +19,38 @@ import java.util.zip.ZipFile;
 
 public class VIO
 {
+	public static void copy(File from, File to)
+	{
+		if(from == null || !from.exists() || from.isDirectory())
+		{
+			L.LOG.w("Cant copy null/nonexistant/dir " + from.getPath());
+			return;
+		}
+
+		if(to.isDirectory())
+		{
+			L.LOG.w("Cant copy to directory " + to.getPath());
+			return;
+		}
+
+		try
+		{
+			to.delete();
+			to.createNewFile();
+			FileOutputStream fos = new FileOutputStream(to);
+			FileInputStream fin = new FileInputStream(from);
+			VIO.fullTransfer(fin, fos, 18192);
+			fos.close();
+			fin.close();
+			L.LOG.v("Copied " + from.getPath() + " to " + to.getPath());
+		}
+
+		catch(Throwable e)
+		{
+			e.printStackTrace();
+		}
+	}
+
 	/**
 	 * Transfers the length of the buffer amount of data from the input stream to
 	 * the output stream

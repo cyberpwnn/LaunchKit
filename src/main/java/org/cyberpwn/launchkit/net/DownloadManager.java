@@ -31,6 +31,7 @@ public class DownloadManager
 	private ExecutorService slowService;
 	private HashMap<File, DownloadMetrics> progress;
 	private File cache;
+	private DownloadMetrics ldm;
 
 	public DownloadManager(File cache)
 	{
@@ -79,21 +80,35 @@ public class DownloadManager
 		DownloadMetrics dm = new DownloadMetrics(0, 0, 0, 0);
 		dm.setStartedAt(System.currentTimeMillis());
 
-		for(DownloadMetrics i : progress.values())
+		if(progress.size() == 0)
 		{
-			dm.setLength(i.getLength() + dm.getLength());
-			dm.setSoFar(i.getSoFar() + dm.getSoFar());
-
-			if(i.getStartedAt() < dm.getStartedAt())
-			{
-				dm.setStartedAt(i.getStartedAt());
-			}
-
-			dm.setProgress(i.getProgress() + dm.getProgress());
+			return dm;
 		}
 
-		dm.setProgress(dm.getProgress() / (double) progress.size());
+		try
+		{
+			for(DownloadMetrics i : progress.values())
+			{
+				dm.setLength(i.getLength() + dm.getLength());
+				dm.setSoFar(i.getSoFar() + dm.getSoFar());
 
+				if(i.getStartedAt() < dm.getStartedAt())
+				{
+					dm.setStartedAt(i.getStartedAt());
+				}
+
+				dm.setProgress(i.getProgress() + dm.getProgress());
+			}
+
+			dm.setProgress(dm.getProgress() / (double) progress.size());
+		}
+
+		catch(Throwable e)
+		{
+			return ldm;
+		}
+
+		ldm = dm;
 		return dm;
 	}
 
@@ -113,6 +128,7 @@ public class DownloadManager
 		downloadService.shutdown();
 		downloadService.awaitTermination(10000, TimeUnit.MINUTES);
 		createService();
+		progress.clear();
 	}
 
 	public void download(String url, File file)
@@ -188,49 +204,60 @@ public class DownloadManager
 
 	public void download(String url, File file, long length, Runnable r)
 	{
-		downloadService.submit(new Runnable()
+		try
 		{
-			@Override
-			public void run()
+			URL urlx = new URL(url);
+			long mlength = length <= 0 ? getFileSize(urlx) : length;
+			progress.put(file, new DownloadMetrics(0, length, 0, M.ms()));
+
+			downloadService.submit(new Runnable()
 			{
-				try
+				@Override
+				public void run()
 				{
-					file.getParentFile().mkdirs();
-					URL urlx = new URL(url);
-					InputStream str = null;
-
-					if(url.startsWith("https://"))
+					try
 					{
-						HttpsURLConnection con = (HttpsURLConnection) urlx.openConnection();
-						con.setRequestMethod("GET");
-						con.setRequestProperty("Content-Type", "application/json");
-						con.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36");
-						str = con.getInputStream();
+						file.getParentFile().mkdirs();
+						InputStream str = null;
+
+						if(url.startsWith("https://"))
+						{
+							HttpsURLConnection con = (HttpsURLConnection) urlx.openConnection();
+							con.setRequestMethod("GET");
+							con.setRequestProperty("Content-Type", "application/json");
+							con.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36");
+							str = con.getInputStream();
+						}
+
+						else
+						{
+							str = urlx.openStream();
+						}
+
+						long mx = System.currentTimeMillis();
+						long size = mlength;
+						ReadableByteChannel rbc = new CallbackByteChannel(Channels.newChannel(str), size, (rbx, pct) -> progress.put(file, new DownloadMetrics(pct, size, rbx.getReadSoFar(), mx)));
+						FileOutputStream fileOutputStream = new FileOutputStream(file);
+						FileChannel fileChannel = fileOutputStream.getChannel();
+						fileChannel.transferFrom(rbc, 0, Long.MAX_VALUE);
+						fileChannel.close();
+						fileOutputStream.close();
+						rbc.close();
+						r.run();
 					}
 
-					else
+					catch(Throwable e)
 					{
-						str = urlx.openStream();
+						e.printStackTrace();
 					}
-
-					long mx = System.currentTimeMillis();
-					long size = length <= 0 ? getFileSize(urlx) : length;
-					ReadableByteChannel rbc = new CallbackByteChannel(Channels.newChannel(str), size, (rbx, pct) -> progress.put(file, new DownloadMetrics(pct, size, rbx.getReadSoFar(), mx)));
-					FileOutputStream fileOutputStream = new FileOutputStream(file);
-					FileChannel fileChannel = fileOutputStream.getChannel();
-					fileChannel.transferFrom(rbc, 0, Long.MAX_VALUE);
-					fileChannel.close();
-					fileOutputStream.close();
-					rbc.close();
-					r.run();
 				}
+			});
+		}
 
-				catch(Throwable e)
-				{
-					e.printStackTrace();
-				}
-			}
-		});
+		catch(Throwable e)
+		{
+			e.printStackTrace();
+		}
 	}
 
 	public long getFileSize(URL url)

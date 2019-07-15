@@ -25,6 +25,7 @@ import org.cyberpwn.launchkit.pack.Pack;
 import org.cyberpwn.launchkit.pack.PackInstall;
 import org.cyberpwn.launchkit.pack.PackProfile;
 import org.cyberpwn.launchkit.util.Artifact;
+import org.cyberpwn.launchkit.util.ChronoLatch;
 import org.cyberpwn.launchkit.util.Comp;
 import org.cyberpwn.launchkit.util.GList;
 import org.cyberpwn.launchkit.util.GMap;
@@ -57,11 +58,12 @@ public class Launcher
 	private final File forgeVersionFile;
 	private final File minecraftFolder;
 	private final File nativesFolder;
-	private final File settingsFile;
 	private final File packFile;
 	private final File packFileEffective;
 	private final File downloadCache;
 	private final File packFileNew;
+	private final String platform = OSF.rawOS();
+	private final ProgressEmitter emitter;
 	private File assetsIndexesFolder;
 	private File assetsObjectsFolder;
 	private File assetsFolder;
@@ -80,12 +82,14 @@ public class Launcher
 	private boolean authenticated;
 	private boolean validated;
 	private Process activeProcess;
-	private final String platform = OSF.rawOS();
+	private boolean downloading;
+	private ChronoLatch stateLatch;
 
 	public Launcher() throws InterruptedException, JSONException, IOException, ClassNotFoundException
 	{
 		commander = new Commander();
 		status("Starting");
+		stateLatch = new ChronoLatch(1000);
 		authenticated = false;
 		root = new File(new File(Environment.local_fs ? "." : System.getProperty("user.home")), Environment.root_folder_name);
 		v("Launcher Root Directory: " + root.getAbsolutePath());
@@ -99,17 +103,32 @@ public class Launcher
 		forgeUniversal = new File(launcherLibraries, "net/minecraftforge/forge/" + Environment.minecraft_version + "/" + Environment.forge_version + "/forge-" + Environment.minecraft_version + "-" + Environment.forge_version + "-universal.jar");
 		versionManifestFile = new File(launcherMetadata, "version-manifest.json");
 		forgeVersionFile = new File(launcherMetadata, "forge-" + Environment.minecraft_version + "-" + Environment.forge_version + ".json");
-		minecraftVersionFile = new File(launcherMetadata, "minecraft-" + Environment.minecraft_version + ".json");
+		minecraftVersionFile = new File(launcherMetadata, "minecraft-meta.json");
 		minecraftFolder = new File(root, ".minecraft");
 		assetsFolder = new File(minecraftFolder, "assets");
 		downloadCache = new File(launcherRoot, "cache");
 		assetsObjectsFolder = new File(assetsFolder, "objects");
 		assetsIndexesFolder = new File(assetsFolder, "indexes");
 		authFolder = new File(launcherRoot, "auth");
-		settingsFile = new File(root, "launch-settings.json");
 		downloadManager = new DownloadManager(downloadCache);
 		setFolderVisibility(launcherRoot, true);
 		validated = false;
+		emitter = new ProgressEmitter(this, 100);
+		emitter.start();
+		downloading = false;
+	}
+
+	public void emitProgress()
+	{
+		if(downloading)
+		{
+			if(stateLatch.flip())
+			{
+				status(launcherStatus);
+			}
+
+			commander.sendMessage("progress=" + ((double) ((int) (downloadManager.getProgress().getProgress() * 100D))) / 10000D);
+		}
 	}
 
 	public Launcher authenticateExternal(String profileName, String profileType, String uuid, String accessToken)
@@ -207,11 +226,11 @@ public class Launcher
 			}
 		}
 
-		JSONObject o = new JSONObject(VIO.readAll(settingsFile));
 		l("Using Java at " + javaw());
 		GList<String> parameters = new GList<>();
-		String mainClass = (Environment.forge_enabled ? forgeVersion : minecraftVersion).getString("mainClass");
-		String t = (Environment.forge_enabled ? forgeVersion : minecraftVersion).getString("minecraftArguments");
+		JSONObject meta = Environment.forge_enabled ? forgeVersion : minecraftVersion;
+		String mainClass = meta.getString("mainClass");
+		String t = meta.getString("minecraftArguments");
 		t = filter(t, "auth_player_name", authenticated ? authUsername : "Player" + (int) (Math.random() * 9) + "" + (int) (Math.random() * 9) + "" + (int) (Math.random() * 9));
 		t = filter(t, "version_name", Environment.minecraft_version);
 		t = filter(t, "game_directory", minecraftFolder.getAbsolutePath());
@@ -232,9 +251,9 @@ public class Launcher
 		else
 		{
 			w("Profile " + profile.getName() + " does not contain launch args. Using config/environment args.");
-			parameters.add("-Xmx" + (Environment.override_config ? Environment.jvm_memory_max : o.getString("jvm.memory.max")));
-			parameters.add("-Xms" + (Environment.override_config ? Environment.jvm_memory_min : o.getString("jvm.memory.min")));
-			parameters.add((Environment.override_config ? Environment.jvm_opts : o.getString("jvm.opts")).trim().split("\\Q \\E"));
+			parameters.add("-Xmx" + Environment.jvm_memory_max);
+			parameters.add("-Xms" + Environment.jvm_memory_min);
+			parameters.add(Environment.jvm_opts.trim().split("\\Q \\E"));
 		}
 
 		parameters.add("-Djava.library.path=" + nativesFolder.getAbsolutePath());
@@ -266,25 +285,29 @@ public class Launcher
 		parameters.add(mainClass);
 		parameters.add(t.trim().split("\\Q \\E"));
 
-		v("======================================================================");
-
-		for(String i : parameters)
+		if(Environment.debug_launchparams)
 		{
-			if(i.contains(";"))
+			v("======================================================================");
+
+			for(String i : parameters)
 			{
-				for(String j : i.split(";"))
+				if(i.contains(";"))
 				{
-					v("CLASSPATH: " + j);
+					for(String j : i.split(";"))
+					{
+						v("CLASSPATH: " + j);
+					}
+				}
+
+				else
+				{
+					v("ARGS: " + i);
 				}
 			}
 
-			else
-			{
-				v("ARGS: " + i);
-			}
+			v("======================================================================");
 		}
 
-		v("======================================================================");
 		ProcessBuilder pb = new ProcessBuilder(parameters);
 		pb.directory(minecraftFolder);
 		activeProcess = pb.start();
@@ -357,10 +380,13 @@ public class Launcher
 
 	public Launcher validate() throws InterruptedException, ZipException, IOException, IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, SecurityException, JSONException
 	{
+		downloading = true;
 		status("Validating Launch");
+		validatePackMeta();
+		swapQueues();
+		validatePack();
 		validateVersionManifest();
 		validateForgeUniversal();
-		validatePackMeta();
 		swapQueues();
 		findMinecraftVersion();
 		extractForgeManifest();
@@ -370,14 +396,14 @@ public class Launcher
 		validateMinecraftLibraries();
 		validateForgeLibraries();
 		validateMinecraftConfiguration();
-		validateSettings();
-		validatePack();
 		swapQueues();
 		validateNatives();
 		validateCleaning();
+		commander.sendMessage("progress=1");
 		status("Ready");
 		commander.sendMessage("validated");
 		validated = true;
+		downloading = false;
 
 		return this;
 	}
@@ -409,7 +435,7 @@ public class Launcher
 			if(packFileNew.exists())
 			{
 				update = true;
-				Files.copy(packFileNew.toPath(), packFile.toPath());
+				VIO.copy(packFileNew, packFile);
 			}
 		}
 
@@ -419,19 +445,29 @@ public class Launcher
 			return;
 		}
 
+		File o = new File(root, "override-pack.json");
+		if(o.exists())
+		{
+			VIO.copy(o, packFileNew);
+		}
+
 		JSONObject jold = null;
 		JSONObject jnew = null;
 		jold = new JSONObject(VIO.readAll(packFile));
-		newPack = UniversalParser.fromJSON(jnew = new JSONObject(VIO.readAll(packFileNew)), Pack.class);
+		jnew = new JSONObject(VIO.readAll(packFileNew));
+		newPack = UniversalParser.fromJSON(jnew, Pack.class);
 		VIO.writeAll(packFileEffective, UniversalParser.toJSON(newPack).toString(4));
 		v("Pack: " + newPack.getIdentity().getName() + " version " + newPack.getIdentity().getVersion());
 		if(newPack.getGame().getForgeVersion().equals("no"))
 		{
+			v("Pack is not using Forge. Disabling");
 			Environment.forge_enabled = false;
+			Environment.forge_version = "no";
 		}
 
 		else
 		{
+			v("Pack is using Forge. Activating");
 			Environment.forge_enabled = true;
 			Environment.forge_version = newPack.getGame().getForgeVersion();
 		}
@@ -464,6 +500,12 @@ public class Launcher
 				VIO.delete(downloadCache);
 				downloadCache.mkdirs();
 			}
+
+			if(!(newPack.getGame().getForgeVersion() + newPack.getGame().getMinecraftVersion()).equals(oldPack.getGame().getForgeVersion() + oldPack.getGame().getMinecraftVersion()))
+			{
+				w("Pack changed game versioning. Deleting Libraries");
+				VIO.delete(launcherLibraries);
+			}
 		}
 
 		catch(Throwable e)
@@ -490,6 +532,16 @@ public class Launcher
 
 			l("Validating Pack Install");
 			validatePackInstall(newPack);
+		}
+
+		try
+		{
+			VIO.copy(packFileNew, packFile);
+		}
+
+		catch(Throwable e)
+		{
+
 		}
 	}
 
@@ -744,17 +796,9 @@ public class Launcher
 		File o = new File(root, "override-pack.json");
 		if(o.exists())
 		{
-			try
-			{
-				Files.copy(o.toPath(), packFileNew.toPath());
-				w("Using override-pack pack as update pack.json.");
-				w("To support downloading remote pack json files, delete this file.");
-			}
-
-			catch(IOException e)
-			{
-				e.printStackTrace();
-			}
+			VIO.copy(o, packFileNew);
+			w("Using override-pack pack as update pack.json.");
+			w("To support downloading remote pack json files, delete this file.");
 		}
 
 		else
@@ -766,47 +810,6 @@ public class Launcher
 	private String javaw()
 	{
 		return System.getProperty("java.home") + File.separator + "bin" + File.separator + "javaw.exe";
-	}
-
-	private void validateSettings() throws IOException
-	{
-		status("Validating Settings");
-		JSONObject defaultConfig = new JSONObject();
-		defaultConfig.put("jvm.memory.max", Environment.jvm_memory_max);
-		defaultConfig.put("jvm.memory.min", Environment.jvm_memory_min);
-		defaultConfig.put("jvm.opts", Environment.jvm_opts);
-
-		JSONObject currentConfig = new JSONObject();
-
-		if(settingsFile.exists())
-		{
-			try
-			{
-				currentConfig = new JSONObject(VIO.readAll(settingsFile));
-			}
-
-			catch(Throwable e)
-			{
-				e.printStackTrace();
-			}
-		}
-
-		boolean modified = false;
-
-		for(String i : defaultConfig.keySet())
-		{
-			if(!currentConfig.has(i))
-			{
-				v("Adding Default Config Option " + i + " -> " + defaultConfig.get(i).toString());
-				currentConfig.put(i, defaultConfig.get(i));
-				modified = true;
-			}
-		}
-
-		if(modified)
-		{
-			VIO.writeAll(settingsFile, currentConfig.toString(4));
-		}
 	}
 
 	private void validateNatives()
@@ -850,12 +853,20 @@ public class Launcher
 
 	private void validateMinecraftConfiguration()
 	{
-		JSONObject logFile = minecraftVersion.getJSONObject("logging").getJSONObject("client").getJSONObject("file");
-		File logging = new File(assetsFolder, "log_configs/" + logFile.getString("id"));
-
-		if(!logging.exists())
+		try
 		{
-			downloadManager.download(logFile.getString("url"), logging, logFile.getInt("size"));
+			JSONObject logFile = minecraftVersion.getJSONObject("logging").getJSONObject("client").getJSONObject("file");
+			File logging = new File(assetsFolder, "log_configs/" + logFile.getString("id"));
+
+			if(!logging.exists())
+			{
+				downloadManager.download(logFile.getString("url"), logging, logFile.getInt("size"));
+			}
+		}
+
+		catch(Throwable e)
+		{
+			w("This version of minecraft is too old to support l4j configs");
 		}
 	}
 
@@ -957,17 +968,10 @@ public class Launcher
 	{
 		status("Validating Minecraft");
 		File client = new File(minecraftFolder, "versions/" + Environment.minecraft_version + "/" + Environment.minecraft_version + ".jar");
-		File clientMeta = new File(minecraftFolder, "versions/" + Environment.minecraft_version + "/" + Environment.minecraft_version + ".json");
 
 		if(!client.exists())
 		{
 			downloadManager.download(minecraftVersion.getJSONObject("downloads").getJSONObject("client").getString("url"), client, minecraftVersion.getJSONObject("downloads").getJSONObject("client").getInt("size"));
-		}
-
-		if(!clientMeta.exists())
-		{
-			clientMeta.getParentFile().mkdirs();
-			Files.copy(versionManifestFile.toPath(), clientMeta.toPath());
 		}
 	}
 
@@ -1073,12 +1077,24 @@ public class Launcher
 
 			forgeVersion = new JSONObject(VIO.readAll(forgeVersionFile));
 		}
+
+		else if(forgeVersionFile.exists())
+		{
+			v("Deleting " + forgeVersionFile.getPath() + " because it's for forge.");
+			forgeVersionFile.delete();
+		}
 	}
 
 	private void validateForgeUniversal()
 	{
 		if(forgeUniversal.exists())
 		{
+			if(!Environment.forge_enabled)
+			{
+				v("Deleting " + forgeUniversal.getPath() + " because it's for forge.");
+				forgeUniversal.delete();
+			}
+
 			return;
 		}
 
@@ -1282,11 +1298,6 @@ public class Launcher
 	public File getNativesFolder()
 	{
 		return nativesFolder;
-	}
-
-	public File getSettingsFile()
-	{
-		return settingsFile;
 	}
 
 	public File getAssetsIndexesFolder()
