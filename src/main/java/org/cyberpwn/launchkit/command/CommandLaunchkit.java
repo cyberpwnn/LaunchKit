@@ -31,6 +31,16 @@ public class CommandLaunchkit implements Command
 					m.remove(0);
 					Environment.set(args[1], m.toString(" "));
 				}
+				
+				else if(args.length == 2)
+				{
+					System.out.println(args[1] + " = " + Environment.get(args[1]));
+				}
+				
+				else
+				{
+					Environment.list();
+				}
 			}
 		}
 	}

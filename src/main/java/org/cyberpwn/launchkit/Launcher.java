@@ -116,6 +116,139 @@ public class Launcher
 		emitter = new ProgressEmitter(this, 100);
 		emitter.start();
 		downloading = false;
+		init();
+		status("ready");
+		L.LOG.l("Ready. Use /help for help.");
+		L.LOG.l("-------------------------------------------");
+		autoStart();
+	}
+
+	private void autoStart() 
+	{
+		if(Environment.auto_start)
+		{
+			try {
+				launch();
+			} catch (JSONException | IllegalArgumentException | IllegalAccessException | InstantiationException
+					| InvocationTargetException | NoSuchMethodException | SecurityException | IOException
+					| InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private void init() 
+	{
+		if(Environment.generate_example_json)
+		{
+			try 
+			{
+				writeExample(generateExampleForge1122());
+				writeExample(generateExampleVanilla1122());
+				writeExample(generateExampleVanilla188());
+			} 
+			
+			catch (Throwable e) 
+			{
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private void writeExample(Pack pack) throws Throwable
+	{
+		L.LOG.l("Generating Example: " + pack.getIdentity().getName());
+		File folder = new File(root, "example-packs");
+		folder.mkdirs();
+		VIO.writeAll(new File(folder, pack.getIdentity().getName() + ".json"), UniversalParser.toJSON(pack).toString(4));
+	}
+	
+	private Pack generateExampleVanilla188() 
+	{
+		Pack pack = new Pack();
+		pack.getGame().setForgeVersion("no");
+		pack.getGame().setMinecraftVersion("1.8.8");
+		pack.getIdentity().setName("Vanilla 1.8.8");
+		pack.getIdentity().setDescription("Pack Description");
+		pack.getIdentity().setVersion(1);
+		
+		PackInstall pUnity = new PackInstall();
+		pUnity.setLocation("resourcepacks");
+		pUnity.setDownload("https://www.curseforge.com/minecraft/texture-packs/unity/download/2576530/file");
+		pUnity.setType("zip");
+		pUnity.setHint("resourcepack");
+		
+		pack.getInstall().add(pUnity);
+		
+		PackProfile defaultProfile = new PackProfile("default");
+		defaultProfile.getLaunchArgs().add("-Xms1m");
+		defaultProfile.getLaunchArgs().add("-Xmx850m");
+		pack.getProfiles().add(defaultProfile);
+		
+		return pack;
+	}
+	
+	private Pack generateExampleVanilla1122() 
+	{
+		Pack pack = new Pack();
+		pack.getGame().setForgeVersion("no");
+		pack.getGame().setMinecraftVersion("1.12.2");
+		pack.getIdentity().setName("Vanilla 1.12.2");
+		pack.getIdentity().setDescription("Pack Description");
+		pack.getIdentity().setVersion(1);
+		
+		PackInstall pUnity = new PackInstall();
+		pUnity.setLocation("resourcepacks");
+		pUnity.setDownload("https://www.curseforge.com/minecraft/texture-packs/unity/download/2576530/file");
+		pUnity.setType("zip");
+		pUnity.setHint("resourcepack");
+		
+		pack.getInstall().add(pUnity);
+		
+		PackProfile defaultProfile = new PackProfile("default");
+		defaultProfile.getLaunchArgs().add("-Xms1m");
+		defaultProfile.getLaunchArgs().add("-Xmx850m");
+		pack.getProfiles().add(defaultProfile);
+		
+		return pack;
+	}
+
+	private Pack generateExampleForge1122() 
+	{
+		Pack pack = new Pack();
+		pack.getGame().setForgeVersion(Environment.forge_version);
+		pack.getGame().setMinecraftVersion(Environment.minecraft_version);
+		pack.getIdentity().setName("Forge 1.12.2");
+		pack.getIdentity().setDescription("Pack Description");
+		pack.getIdentity().setVersion(1);
+		
+		PackInstall pOptifine = new PackInstall();
+		pOptifine.setLocation("mods");
+		pOptifine.setDownload("https://optifine.net/adloadx?f=OptiFine_1.12.2_HD_U_E3.jar");
+		pOptifine.setHint("optifine");
+		pOptifine.setType("jar");
+		
+		PackInstall pDysurr = new PackInstall();
+		pDysurr.setLocation("mods");
+		pDysurr.setDownload("https://www.curseforge.com/minecraft/mc-mods/dynamic-surroundings/download/2664392/file");
+		pDysurr.setType("jar");
+		
+		PackInstall pUnity = new PackInstall();
+		pUnity.setLocation("resourcepacks");
+		pUnity.setDownload("https://www.curseforge.com/minecraft/texture-packs/unity/download/2576530/file");
+		pUnity.setType("zip");
+		pUnity.setHint("resourcepack");
+		
+		pack.getInstall().add(pOptifine);
+		pack.getInstall().add(pDysurr);
+		pack.getInstall().add(pUnity);
+		
+		PackProfile defaultProfile = new PackProfile("default");
+		defaultProfile.getLaunchArgs().add("-Xms1m");
+		defaultProfile.getLaunchArgs().add("-Xmx1g");
+		pack.getProfiles().add(defaultProfile);
+		
+		return pack;
 	}
 
 	public void emitProgress()

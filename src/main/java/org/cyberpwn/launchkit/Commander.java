@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 
 import org.cyberpwn.launchkit.command.Command;
 import org.cyberpwn.launchkit.command.CommandExit;
+import org.cyberpwn.launchkit.command.CommandHelp;
 import org.cyberpwn.launchkit.command.CommandLaunchkit;
 import org.cyberpwn.launchkit.command.CommandMinecraft;
 import org.cyberpwn.launchkit.util.GList;
@@ -21,6 +22,7 @@ public class Commander extends Thread
 		commands.add(new CommandLaunchkit());
 		commands.add(new CommandMinecraft());
 		commands.add(new CommandExit());
+		commands.add(new CommandHelp());
 		bu = new BufferedReader(new InputStreamReader(System.in));
 		start();
 	}

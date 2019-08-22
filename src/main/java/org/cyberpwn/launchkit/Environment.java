@@ -6,6 +6,34 @@ import org.cyberpwn.launchkit.util.L;
 
 public class Environment
 {
+	public static void list()
+	{
+		for(Field i : Environment.class.getDeclaredFields())
+		{
+			System.out.println(i.getName() + " = " + get(i.getName()) + " (" + i.getType().getSimpleName() + ")");
+		}
+	}
+	
+	public static String get(String string)
+	{
+		try
+		{
+			Field f = Environment.class.getDeclaredField(string);
+			f.setAccessible(true);
+
+			return f.get(null) + "";
+		}
+
+		catch(Throwable e)
+		{
+			L.LOG.w("No Environment Variable: " + string);
+		}
+		
+		L.LOG.w("No Environment Variable: " + string);
+		
+		return "null";
+	}
+	
 	public static void set(String key, String val)
 	{
 		try
@@ -42,6 +70,9 @@ public class Environment
 			L.LOG.w("No Environment Variable: " + key);
 		}
 	}
+	
+	// Development
+	public static boolean generate_example_json = false;
 
 	// Forge
 	public static boolean forge_enabled = true;
@@ -49,7 +80,8 @@ public class Environment
 
 	// Game
 	public static String minecraft_version = "1.12.2";
-
+	public static boolean auto_start = false;
+	
 	// LaunchKit
 	public static String root_folder_name = "LaunchKit";
 	public static String remote_path = "user.home";
