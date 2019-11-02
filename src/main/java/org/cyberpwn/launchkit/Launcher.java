@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -409,8 +408,8 @@ public class Launcher
 		else
 		{
 			w("Profile " + profile.getName() + " does not contain launch args. Using config/environment args.");
-			parameters.add("-Xmx" + Environment.jvm_memory_max);
-			parameters.add("-Xms" + Environment.jvm_memory_min);
+			parameters.add("-Xmx" + Environment.jvm_memory_max == null ? "1g" : Environment.jvm_memory_max);
+			parameters.add("-Xms" + Environment.jvm_memory_min == null ? "1m" : Environment.jvm_memory_min);
 			parameters.add(Environment.jvm_opts.trim().split("\\Q \\E"));
 		}
 
@@ -723,7 +722,7 @@ public class Launcher
 					{
 						resourcepacks.add(f.getName());
 					}
-					
+
 					if(u.startsWith("https://www.curseforge.com/minecraft/") || u.startsWith("https://curseforge.com/minecraft/"))
 					{
 						if(!u.endsWith("/download"))
@@ -837,7 +836,7 @@ public class Launcher
 								temp.mkdirs();
 								v("Extracting " + f.getPath() + "'s Repo contents into " + bsa.getPath());
 								ZipUtil.unpack(f, temp);
-								
+
 								File dir = null;
 								for(File i : temp.listFiles())
 								{
@@ -865,14 +864,12 @@ public class Launcher
 					});
 				}
 			}
-			
+
 			catch(Throwable e)
 			{
 				e.printStackTrace();
 			}
 		}
-		
-		
 
 		if(!resourcepacks.isEmpty())
 		{
@@ -918,7 +915,7 @@ public class Launcher
 			}
 		}
 	}
-	
+
 	private void move(File s, File d)
 	{
 		try
@@ -1086,7 +1083,23 @@ public class Launcher
 
 		else
 		{
-			downloadManager.download(Environment.pack, packFileNew);
+			if(Environment.pack.startsWith("file://"))
+			{
+				try
+				{
+					Files.copy(new File(Environment.pack.substring("file://".length())).toPath(), packFileNew.toPath(), StandardCopyOption.REPLACE_EXISTING);
+				}
+				
+				catch(IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
+
+			else
+			{
+				downloadManager.download(Environment.pack, packFileNew);
+			}
 		}
 	}
 
