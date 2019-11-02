@@ -22,6 +22,7 @@ Using the output stream to LaunchKit (assuming you started the process) you can 
 
 | Command | Usage |
 |---------|-------|
+| `/help ` | USE IT DAMMIT |
 | `/launchkit env key value` | Sets a launchkit environment variable |
 | `/launchkit stop` | Gracefully stops launchkit. Does not kill the client if it's running. |
 | `/minecraft stop` | Crashes minecraft if it's running. Does not kill launchkit |
@@ -49,3 +50,7 @@ For example, `@ppm:hello world` means `hello world`
 | `@ppm:validated` | This is when launchkit is validated. This is useful when running `/minecraft validate`. |
 | `@ppm:running` | This is when launchkit has bound to the client process and the game is considered running. |
 | `@ppm:stopped` | This is when the game has stopped. Either by crashing or by your command (`/minecraft stop`) |
+
+### Configuration
+
+Please check the wiki for configuration!
