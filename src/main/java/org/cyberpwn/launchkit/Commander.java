@@ -9,7 +9,8 @@ import org.cyberpwn.launchkit.command.CommandExit;
 import org.cyberpwn.launchkit.command.CommandHelp;
 import org.cyberpwn.launchkit.command.CommandLaunchkit;
 import org.cyberpwn.launchkit.command.CommandMinecraft;
-import org.cyberpwn.launchkit.util.GList;
+
+import ninja.bytecode.shuriken.collections.GList;
 
 public class Commander extends Thread
 {

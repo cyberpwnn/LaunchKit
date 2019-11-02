@@ -18,12 +18,12 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HttpsURLConnection;
 
 import org.cyberpwn.launchkit.Environment;
-import org.cyberpwn.launchkit.util.Hasher;
 import org.cyberpwn.launchkit.util.L;
 import org.cyberpwn.launchkit.util.M;
-import org.cyberpwn.launchkit.util.VIO;
 
 import com.google.common.io.Files;
+
+import ninja.bytecode.shuriken.io.IO;
 
 public class DownloadManager
 {
@@ -63,7 +63,7 @@ public class DownloadManager
 			{
 				slowService.submit(() ->
 				{
-					VIO.deleteUp(f);
+					IO.deleteUp(f);
 					L.LOG.v("Cleaning Cache: " + f.getName());
 				});
 			}
@@ -157,7 +157,7 @@ public class DownloadManager
 
 	public void downloadCached(String url, File file, long length, Runnable r)
 	{
-		String hash = Hasher.hash(url);
+		String hash = IO.hash(url);
 		File f = new File(cache, hash.substring(0, 2) + "/" + hash + "." + getChronoSegment());
 		f.getParentFile().mkdirs();
 
@@ -165,8 +165,9 @@ public class DownloadManager
 		{
 			try
 			{
-				L.LOG.v("Usinc Cached Copy of " + url + " to " + file.getPath());
+				L.LOG.v("Using Cached Copy of " + url + " to " + file.getPath());
 				Files.copy(f, file);
+				r.run();
 			}
 
 			catch(IOException e)

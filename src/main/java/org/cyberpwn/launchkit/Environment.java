@@ -94,7 +94,7 @@ public class Environment
 	public static String jvm_opts = "-XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -XX:MaxGCPauseMillis=15 -XX:+DisableExplicitGC -XX:+ParallelRefProcEnabled -XX:ParallelGCThreads=8 -XX:ConcGCThreads=3 -XX:G1HeapWastePercent=9";
 	public static String jvm_memory_min = "1m";
 	public static String jvm_memory_max = "1g";
-	public static boolean clean_logs = true;
+	public static boolean clean_logs = false;
 
 	// Pack
 	public static String pack = "https://raw.githubusercontent.com/cyberpwnn/LaunchKit/master/pack.json";

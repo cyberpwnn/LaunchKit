@@ -4,7 +4,7 @@
   <groupId>org.cyberpwn</groupId>
   <artifactId>LaunchKit</artifactId>
   <name>LaunchKit</name>
-  <version>1.2</version>
+  <version>1.4</version>
   <build>
     <plugins>
       <plugin>
@@ -33,6 +33,10 @@
     <repository>
       <id>Mojang libs</id>
       <url>https://libraries.minecraft.net/</url>
+    </repository>
+    <repository>
+      <id>pub</id>
+      <url>http://nexus.mpm.care/content/repositories/pub</url>
     </repository>
   </repositories>
   <properties>

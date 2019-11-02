@@ -15,6 +15,9 @@ public class Pack
 
 	@UniversalType(PackInstall.class)
 	private List<PackInstall> install;
+	
+	@UniversalType(PackTweak.class)
+	private List<PackTweak> tweaks;
 
 	public Pack()
 	{
@@ -27,6 +30,7 @@ public class Pack
 		this.game = game;
 		profiles = new ArrayList<>();
 		install = new ArrayList<>();
+		tweaks = new ArrayList<>();
 	}
 
 	public PackIdentity getIdentity()
@@ -67,5 +71,15 @@ public class Pack
 	public void setInstall(List<PackInstall> install)
 	{
 		this.install = install;
+	}
+
+	public List<PackTweak> getTweaks()
+	{
+		return tweaks;
+	}
+
+	public void setTweaks(List<PackTweak> tweaks)
+	{
+		this.tweaks = tweaks;
 	}
 }

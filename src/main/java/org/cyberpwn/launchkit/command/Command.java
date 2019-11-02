@@ -1,7 +1,8 @@
 package org.cyberpwn.launchkit.command;
 
 import org.cyberpwn.launchkit.Commander;
-import org.cyberpwn.launchkit.util.GList;
+
+import ninja.bytecode.shuriken.collections.GList;
 
 public interface Command
 {

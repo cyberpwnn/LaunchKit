@@ -9,6 +9,8 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -24,11 +26,10 @@ import org.cyberpwn.launchkit.net.DownloadManager;
 import org.cyberpwn.launchkit.pack.Pack;
 import org.cyberpwn.launchkit.pack.PackInstall;
 import org.cyberpwn.launchkit.pack.PackProfile;
+import org.cyberpwn.launchkit.pack.PackTweak;
 import org.cyberpwn.launchkit.util.Artifact;
 import org.cyberpwn.launchkit.util.ChronoLatch;
 import org.cyberpwn.launchkit.util.Comp;
-import org.cyberpwn.launchkit.util.GList;
-import org.cyberpwn.launchkit.util.GMap;
 import org.cyberpwn.launchkit.util.JSONArray;
 import org.cyberpwn.launchkit.util.JSONException;
 import org.cyberpwn.launchkit.util.JSONObject;
@@ -38,10 +39,13 @@ import org.cyberpwn.launchkit.util.OSF;
 import org.cyberpwn.launchkit.util.Platform;
 import org.cyberpwn.launchkit.util.StreamGobbler;
 import org.cyberpwn.launchkit.util.UniversalParser;
-import org.cyberpwn.launchkit.util.VIO;
 import org.zeroturnaround.zip.ZipUtil;
 
 import com.google.common.collect.Lists;
+
+import ninja.bytecode.shuriken.collections.GList;
+import ninja.bytecode.shuriken.collections.GMap;
+import ninja.bytecode.shuriken.io.IO;
 
 public class Launcher
 {
@@ -123,47 +127,48 @@ public class Launcher
 		autoStart();
 	}
 
-	private void autoStart() 
+	private void autoStart()
 	{
 		if(Environment.auto_start)
 		{
-			try {
+			try
+			{
 				launch();
-			} catch (JSONException | IllegalArgumentException | IllegalAccessException | InstantiationException
-					| InvocationTargetException | NoSuchMethodException | SecurityException | IOException
-					| InterruptedException e) {
+			}
+			catch(JSONException | IllegalArgumentException | IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException | SecurityException | IOException | InterruptedException e)
+			{
 				e.printStackTrace();
 			}
 		}
 	}
 
-	private void init() 
+	private void init()
 	{
 		if(Environment.generate_example_json)
 		{
-			try 
+			try
 			{
 				writeExample(generateExampleForge1122());
 				writeExample(generateExampleVanilla1122());
 				writeExample(generateExampleVanilla188());
-			} 
-			
-			catch (Throwable e) 
+			}
+
+			catch(Throwable e)
 			{
 				e.printStackTrace();
 			}
 		}
 	}
-	
+
 	private void writeExample(Pack pack) throws Throwable
 	{
 		L.LOG.l("Generating Example: " + pack.getIdentity().getName());
 		File folder = new File(root, "example-packs");
 		folder.mkdirs();
-		VIO.writeAll(new File(folder, pack.getIdentity().getName() + ".json"), UniversalParser.toJSON(pack).toString(4));
+		IO.writeAll(new File(folder, pack.getIdentity().getName() + ".json"), UniversalParser.toJSON(pack).toString(4));
 	}
-	
-	private Pack generateExampleVanilla188() 
+
+	private Pack generateExampleVanilla188()
 	{
 		Pack pack = new Pack();
 		pack.getGame().setForgeVersion("no");
@@ -171,24 +176,24 @@ public class Launcher
 		pack.getIdentity().setName("Vanilla 1.8.8");
 		pack.getIdentity().setDescription("Pack Description");
 		pack.getIdentity().setVersion(1);
-		
+
 		PackInstall pUnity = new PackInstall();
 		pUnity.setLocation("resourcepacks");
 		pUnity.setDownload("https://www.curseforge.com/minecraft/texture-packs/unity/download/2576530/file");
 		pUnity.setType("zip");
 		pUnity.setHint("resourcepack");
-		
+
 		pack.getInstall().add(pUnity);
-		
+
 		PackProfile defaultProfile = new PackProfile("default");
 		defaultProfile.getLaunchArgs().add("-Xms1m");
 		defaultProfile.getLaunchArgs().add("-Xmx850m");
 		pack.getProfiles().add(defaultProfile);
-		
+
 		return pack;
 	}
-	
-	private Pack generateExampleVanilla1122() 
+
+	private Pack generateExampleVanilla1122()
 	{
 		Pack pack = new Pack();
 		pack.getGame().setForgeVersion("no");
@@ -196,24 +201,24 @@ public class Launcher
 		pack.getIdentity().setName("Vanilla 1.12.2");
 		pack.getIdentity().setDescription("Pack Description");
 		pack.getIdentity().setVersion(1);
-		
+
 		PackInstall pUnity = new PackInstall();
 		pUnity.setLocation("resourcepacks");
 		pUnity.setDownload("https://www.curseforge.com/minecraft/texture-packs/unity/download/2576530/file");
 		pUnity.setType("zip");
 		pUnity.setHint("resourcepack");
-		
+
 		pack.getInstall().add(pUnity);
-		
+
 		PackProfile defaultProfile = new PackProfile("default");
 		defaultProfile.getLaunchArgs().add("-Xms1m");
 		defaultProfile.getLaunchArgs().add("-Xmx850m");
 		pack.getProfiles().add(defaultProfile);
-		
+
 		return pack;
 	}
 
-	private Pack generateExampleForge1122() 
+	private Pack generateExampleForge1122()
 	{
 		Pack pack = new Pack();
 		pack.getGame().setForgeVersion(Environment.forge_version);
@@ -221,33 +226,53 @@ public class Launcher
 		pack.getIdentity().setName("Forge 1.12.2");
 		pack.getIdentity().setDescription("Pack Description");
 		pack.getIdentity().setVersion(1);
-		
+
 		PackInstall pOptifine = new PackInstall();
 		pOptifine.setLocation("mods");
 		pOptifine.setDownload("https://optifine.net/adloadx?f=OptiFine_1.12.2_HD_U_E3.jar");
 		pOptifine.setHint("optifine");
 		pOptifine.setType("jar");
-		
+
 		PackInstall pDysurr = new PackInstall();
 		pDysurr.setLocation("mods");
-		pDysurr.setDownload("https://www.curseforge.com/minecraft/mc-mods/dynamic-surroundings/download/2664392/file");
+		pDysurr.setDownload("https://www.curseforge.com/minecraft/mc-mods/dynamic-surroundings/download");
 		pDysurr.setType("jar");
-		
+		pDysurr.setActivation("ultra");
+
 		PackInstall pUnity = new PackInstall();
 		pUnity.setLocation("resourcepacks");
-		pUnity.setDownload("https://www.curseforge.com/minecraft/texture-packs/unity/download/2576530/file");
+		pUnity.setDownload("https://www.curseforge.com/minecraft/texture-packs/unity/download");
 		pUnity.setType("zip");
 		pUnity.setHint("resourcepack");
-		
+
+		PackTweak t = new PackTweak();
+		t.setFile("config/splash.properties");
+		t.setFind("showMemory=true");
+		t.setReplace("showMemory=false");
+		t.setActivation("default");
+
+		pack.getTweaks().add(t);
+
 		pack.getInstall().add(pOptifine);
 		pack.getInstall().add(pDysurr);
 		pack.getInstall().add(pUnity);
-		
+
 		PackProfile defaultProfile = new PackProfile("default");
 		defaultProfile.getLaunchArgs().add("-Xms1m");
 		defaultProfile.getLaunchArgs().add("-Xmx1g");
+
+		PackProfile ultra = new PackProfile("ultra");
+		ultra.getLaunchArgs().add("-Xms1m");
+		ultra.getLaunchArgs().add("-Xmx2g");
+		ultra.getActivation().add("total_system_memory >= 8192");
+		ultra.getActivation().add("free_system_memory >= 4096");
+		ultra.getActivation().add("used_system_memory <= 4096");
+		ultra.getActivation().add("cpu_threads >= 4");
+		ultra.getActivation().add("free_space > 2000");
+
 		pack.getProfiles().add(defaultProfile);
-		
+		pack.getProfiles().add(ultra);
+
 		return pack;
 	}
 
@@ -400,7 +425,7 @@ public class Launcher
 
 		if(OSF.getCurrentOS() == OSF.OS.WINDOWS)
 		{
-			parameters.add("-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump");
+
 		}
 
 		parameters.add("-cp");
@@ -543,17 +568,16 @@ public class Launcher
 
 	public void invalidate()
 	{
-		VIO.delete(launcherRoot);
-		VIO.delete(minecraftFolder);
+		IO.delete(launcherRoot);
+		IO.delete(minecraftFolder);
 	}
 
 	private void validateCleaning()
 	{
 		if(Environment.clean_logs)
 		{
-			VIO.delete(new File(minecraftFolder, "crafttweaker.log"));
-			VIO.delete(new File(minecraftFolder, "config"));
-			VIO.delete(new File(minecraftFolder, "crash-reports"));
+			IO.delete(new File(minecraftFolder, "crafttweaker.log"));
+			IO.delete(new File(minecraftFolder, "crash-reports"));
 		}
 	}
 
@@ -568,7 +592,7 @@ public class Launcher
 			if(packFileNew.exists())
 			{
 				update = true;
-				VIO.copy(packFileNew, packFile);
+				IO.copyFile(packFileNew, packFile);
 			}
 		}
 
@@ -581,15 +605,15 @@ public class Launcher
 		File o = new File(root, "override-pack.json");
 		if(o.exists())
 		{
-			VIO.copy(o, packFileNew);
+			IO.copyFile(o, packFileNew);
 		}
 
 		JSONObject jold = null;
 		JSONObject jnew = null;
-		jold = new JSONObject(VIO.readAll(packFile));
-		jnew = new JSONObject(VIO.readAll(packFileNew));
+		jold = new JSONObject(IO.readAll(packFile));
+		jnew = new JSONObject(IO.readAll(packFileNew));
 		newPack = UniversalParser.fromJSON(jnew, Pack.class);
-		VIO.writeAll(packFileEffective, UniversalParser.toJSON(newPack).toString(4));
+		IO.writeAll(packFileEffective, UniversalParser.toJSON(newPack).toString(4));
 		v("Pack: " + newPack.getIdentity().getName() + " version " + newPack.getIdentity().getVersion());
 		if(newPack.getGame().getForgeVersion().equals("no"))
 		{
@@ -611,7 +635,7 @@ public class Launcher
 
 		if(f.exists())
 		{
-			oldProfile = VIO.readAll(f).trim();
+			oldProfile = IO.readAll(f).trim();
 		}
 
 		computeProfile(newPack);
@@ -630,14 +654,14 @@ public class Launcher
 			if(newPack.getIdentity().getVersion() > oldPack.getIdentity().getVersion())
 			{
 				w("Pack Upgrade, Clearing Download Caches");
-				VIO.delete(downloadCache);
+				IO.delete(downloadCache);
 				downloadCache.mkdirs();
 			}
 
 			if(!(newPack.getGame().getForgeVersion() + newPack.getGame().getMinecraftVersion()).equals(oldPack.getGame().getForgeVersion() + oldPack.getGame().getMinecraftVersion()))
 			{
 				w("Pack changed game versioning. Deleting Libraries");
-				VIO.delete(launcherLibraries);
+				IO.delete(launcherLibraries);
 			}
 		}
 
@@ -669,7 +693,7 @@ public class Launcher
 
 		try
 		{
-			VIO.copy(packFileNew, packFile);
+			IO.copyFile(packFileNew, packFile);
 		}
 
 		catch(Throwable e)
@@ -683,68 +707,172 @@ public class Launcher
 		GList<String> resourcepacks = new GList<>();
 		for(PackInstall i : newPack.getInstall())
 		{
-			if(i.shouldActivate(profile.getName()))
+			try
 			{
-				v("Install " + i.getDownload() + " into " + i.getLocation());
-				String name = i.getName().trim().isEmpty() ? UUID.randomUUID().toString().split("\\Q-\\E")[0] : i.getName();
-				String fullname = i.getType().trim().isEmpty() ? name : name + "." + i.getType();
-				File bsa = new File(minecraftFolder, i.getLocation());
-				File f = new File(bsa, fullname);
-				bsa.mkdirs();
-				String u = i.getDownload();
-
-				if(i.getHint().contains("resourcepack"))
+				if(i.shouldActivate(profile.getName()))
 				{
-					resourcepacks.add(f.getName());
-				}
+					v("Install " + i.getDownload() + " into " + i.getLocation());
+					String name = i.getName().trim().isEmpty() ? UUID.randomUUID().toString().split("\\Q-\\E")[0] : i.getName();
+					String fullname = i.getType().trim().isEmpty() ? name : name + "." + i.getType();
+					File bsa = new File(minecraftFolder, i.getLocation());
+					File f = new File(bsa, fullname);
+					bsa.mkdirs();
+					String u = i.getDownload();
 
-				if(i.getHint().contains("optifine"))
-				{
-					try
+					if(i.getHint().contains("resourcepack"))
 					{
-
-						URL url = new URL(i.getDownload());
-						HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
-						con.setRequestMethod("GET");
-						con.setRequestProperty("Content-Type", "application/json");
-						con.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36");
-
-						InputStream in = con.getInputStream();
-						String html = VIO.readAll(in);
-						in.close();
-
-						for(String line : html.split("\\Q\n\\E"))
+						resourcepacks.add(f.getName());
+					}
+					
+					if(u.startsWith("https://www.curseforge.com/minecraft/") || u.startsWith("https://curseforge.com/minecraft/"))
+					{
+						if(!u.endsWith("/download"))
 						{
-							if(line.trim().startsWith("<a href='downloadx?f=OptiFine_"))
+							if(u.endsWith("/files"))
 							{
-								u = "https://optifine.net/" + line.trim().replaceAll("\\Q<a href='\\E", "").split("\\Q'\\E")[0].trim();
-								break;
+								u = u.replaceFirst("\\Q/files\\E", "/download");
+							}
+
+							else if(!u.endsWith("/"))
+							{
+								u = u + "/download";
 							}
 						}
-					}
 
-					catch(Throwable e)
-					{
-						e.printStackTrace();
-					}
-				}
-
-				downloadManager.downloadCached(u, f, -1, new Runnable()
-				{
-					@Override
-					public void run()
-					{
-						L.LOG.v("Downloaded " + i.getDownload() + " to " + f.getPath());
-
-						if(i.getHint().contains("extract"))
+						try
 						{
-							v("Extracting " + f.getPath() + "'s contents into " + bsa.getPath());
-							ZipUtil.unpack(f, bsa);
+							URL url = new URL(i.getDownload());
+							HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+							con.setRequestMethod("GET");
+							con.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36");
+							con.setRequestProperty("Host", "www.curseforge.com:443");
+							con.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3");
+							con.setRequestProperty("x-ua-compatible", "IE=edge,chrome=1");
+							con.setRequestProperty("strict-transport-security", "max-age=15768000");
+							con.setRequestProperty("status", "200");
+							con.setRequestProperty("server", "cloudflare");
+							con.setRequestProperty("content-type", "text/html; charset=utf-8");
+							con.setRequestProperty("content-encoding", "gzip");
+							con.setRequestProperty("cf-ray", "523f680c2a75be69-RIC");
+							con.setRequestProperty("cf-cache-status", "DYNAMIC");
+							con.setRequestProperty("cache-control", "private");
+							con.setRequestProperty("cache-control", "");
+							con.setRequestProperty("Upgrade-Insecure-Requests", "1");
+							con.setRequestProperty("Sec-Fetch-User", "?1");
+							con.setRequestProperty("Sec-Fetch-Site", "none");
+							con.setRequestProperty("Sec-Fetch-Mode", "navigate");
+
+							InputStream in = con.getInputStream();
+							String html = IO.readAll(in);
+							in.close();
+
+							for(String line : html.split("\\Q\n\\E"))
+							{
+								if(line.trim().startsWith("<a href=\"/minecraft/"))
+								{
+									u = "https://www.curseforge.com" + line.trim().replaceAll("\\Q<a href=\"\\E", "").replaceAll("\\Q\">here</a>\\E", "").trim();
+									w("Mod URL Updated from " + i.getDownload() + " to " + u);
+									break;
+								}
+							}
+						}
+
+						catch(Throwable e)
+						{
+							e.printStackTrace();
 						}
 					}
-				});
+
+					if(i.getHint().contains("optifine"))
+					{
+						try
+						{
+
+							URL url = new URL(i.getDownload());
+							HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+							con.setRequestMethod("GET");
+							con.setRequestProperty("Accept-Language", "en-gb,en;q=0.5");
+							con.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+							con.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36");
+
+							InputStream in = con.getInputStream();
+							String html = IO.readAll(in);
+							in.close();
+
+							for(String line : html.split("\\Q\n\\E"))
+							{
+								if(line.trim().startsWith("<a href='downloadx?f=OptiFine_"))
+								{
+									u = "https://optifine.net/" + line.trim().replaceAll("\\Q<a href='\\E", "").split("\\Q'\\E")[0].trim();
+									break;
+								}
+							}
+						}
+
+						catch(Throwable e)
+						{
+							e.printStackTrace();
+						}
+					}
+
+					L.LOG.v("Downloading " + i.getDownload());
+
+					downloadManager.downloadCached(u, f, -1, new Runnable()
+					{
+						@Override
+						public void run()
+						{
+							L.LOG.v("Downloaded " + i.getDownload() + " to " + f.getPath());
+
+							if(i.getHint().contains("extract"))
+							{
+								v("Extracting " + f.getPath() + "'s contents into " + bsa.getPath());
+								ZipUtil.unpack(f, bsa);
+								IO.delete(f);
+							}
+
+							if(i.getHint().contains("repository"))
+							{
+								File temp = new File(bsa, ".tmp/" + UUID.randomUUID());
+								temp.mkdirs();
+								v("Extracting " + f.getPath() + "'s Repo contents into " + bsa.getPath());
+								ZipUtil.unpack(f, temp);
+								
+								File dir = null;
+								for(File i : temp.listFiles())
+								{
+									if(i.isDirectory())
+									{
+										dir = i;
+										break;
+									}
+								}
+
+								if(dir != null && dir.exists())
+								{
+									for(File i : dir.listFiles())
+									{
+										move(i, new File(bsa, i.getName()));
+										v("Importing File from Repo: " + i.getName());
+									}
+								}
+								IO.delete(temp);
+								IO.delete(f);
+								IO.delete(new File(bsa, "README.md"));
+								IO.delete(new File(bsa, ".tmp"));
+							}
+						}
+					});
+				}
+			}
+			
+			catch(Throwable e)
+			{
+				e.printStackTrace();
 			}
 		}
+		
+		
 
 		if(!resourcepacks.isEmpty())
 		{
@@ -755,7 +883,7 @@ public class Launcher
 			{
 				try
 				{
-					VIO.writeAll(f, p + "\n");
+					IO.writeAll(f, p + "\n");
 				}
 
 				catch(IOException e)
@@ -768,7 +896,7 @@ public class Launcher
 			{
 				try
 				{
-					GList<String> m = new GList<String>(VIO.readAll(f).split("\\Q\n\\E"));
+					GList<String> m = new GList<String>(IO.readAll(f).split("\\Q\n\\E"));
 
 					for(String i : m.copy())
 					{
@@ -780,7 +908,7 @@ public class Launcher
 
 					m.add(p);
 					m.reverse();
-					VIO.writeAll(f, m.toString("\n"));
+					IO.writeAll(f, m.toString("\n"));
 				}
 
 				catch(IOException e)
@@ -790,14 +918,27 @@ public class Launcher
 			}
 		}
 	}
+	
+	private void move(File s, File d)
+	{
+		try
+		{
+			Files.move(s.toPath(), d.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		}
+
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
 
 	private void revertForUpdate()
 	{
-		VIO.delete(new File(minecraftFolder, "resourcepacks"));
-		VIO.delete(new File(minecraftFolder, "shaderpacks"));
-		VIO.delete(new File(minecraftFolder, "config"));
-		VIO.delete(new File(minecraftFolder, "mods"));
-		VIO.delete(new File(minecraftFolder, "resourcepacks"));
+		IO.delete(new File(minecraftFolder, "resourcepacks"));
+		IO.delete(new File(minecraftFolder, "shaderpacks"));
+		IO.delete(new File(minecraftFolder, "config"));
+		IO.delete(new File(minecraftFolder, "mods"));
+		IO.delete(new File(minecraftFolder, "resourcepacks"));
 	}
 
 	private void computeProfile(Pack newPack)
@@ -929,7 +1070,16 @@ public class Launcher
 		File o = new File(root, "override-pack.json");
 		if(o.exists())
 		{
-			VIO.copy(o, packFileNew);
+			try
+			{
+				IO.copyFile(o, packFileNew);
+			}
+
+			catch(IOException e)
+			{
+				e.printStackTrace();
+			}
+
 			w("Using override-pack pack as update pack.json.");
 			w("To support downloading remote pack json files, delete this file.");
 		}
@@ -1111,7 +1261,7 @@ public class Launcher
 	private void validateAssets() throws JSONException, IOException, InterruptedException
 	{
 		status("Validating Assets");
-		minecraftVersion = new JSONObject(VIO.readAll(minecraftVersionFile));
+		minecraftVersion = new JSONObject(IO.readAll(minecraftVersionFile));
 		JSONObject assetIndex = minecraftVersion.getJSONObject("assetIndex");
 		assetsIndexId = assetIndex.getString("id");
 		File index = new File(assetsIndexesFolder, assetsIndexId + ".json");
@@ -1122,7 +1272,7 @@ public class Launcher
 			swapQueues();
 		}
 
-		assetManifest = new JSONObject(VIO.readAll(index));
+		assetManifest = new JSONObject(IO.readAll(index));
 		JSONObject objects = assetManifest.getJSONObject("objects");
 		Iterator<String> it = objects.keys();
 
@@ -1151,7 +1301,7 @@ public class Launcher
 
 	private void findMinecraftVersion() throws JSONException, IOException
 	{
-		versionManifest = new JSONObject(VIO.readAll(versionManifestFile));
+		versionManifest = new JSONObject(IO.readAll(versionManifestFile));
 		JSONArray versions = versionManifest.getJSONArray("versions");
 
 		for(int i = 0; i < versions.length(); i++)
@@ -1181,16 +1331,16 @@ public class Launcher
 
 			if(!forgeVersionFile.exists())
 			{
-				GList<String> e = VIO.listEntries(forgeUniversal);
+				GList<String> e = IO.listEntries(forgeUniversal);
 
 				if(e.contains("version.json"))
 				{
 					FileOutputStream fos = new FileOutputStream(forgeVersionFile);
-					VIO.readEntry(forgeUniversal, "version.json", (s) ->
+					IO.readEntry(forgeUniversal, "version.json", (s) ->
 					{
 						try
 						{
-							VIO.fullTransfer(s, fos, 16819);
+							IO.fullTransfer(s, fos, 16819);
 							v("Extracted Forge Version to " + forgeVersionFile.getPath());
 						}
 
@@ -1208,7 +1358,7 @@ public class Launcher
 				}
 			}
 
-			forgeVersion = new JSONObject(VIO.readAll(forgeVersionFile));
+			forgeVersion = new JSONObject(IO.readAll(forgeVersionFile));
 		}
 
 		else if(forgeVersionFile.exists())

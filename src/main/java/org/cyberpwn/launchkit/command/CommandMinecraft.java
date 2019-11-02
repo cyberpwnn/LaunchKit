@@ -4,7 +4,8 @@ import java.io.IOException;
 
 import org.cyberpwn.launchkit.Commander;
 import org.cyberpwn.launchkit.LaunchKit;
-import org.cyberpwn.launchkit.util.GList;
+
+import ninja.bytecode.shuriken.collections.GList;
 
 public class CommandMinecraft implements Command
 {
@@ -115,6 +116,6 @@ public class CommandMinecraft implements Command
 	@Override
 	public GList<String> getAliases()
 	{
-		return new GList<String>().qadd("mc");
+		return new GList<String>().addNonNull("mc");
 	}
 }

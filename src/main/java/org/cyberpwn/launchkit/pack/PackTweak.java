@@ -1,0 +1,101 @@
+package org.cyberpwn.launchkit.pack;
+
+import ninja.bytecode.shuriken.collections.GList;
+
+public class PackTweak
+{
+	private String file;
+	private String find;
+	private String replace;
+	private String activation;
+
+	public PackTweak()
+	{
+		this("", "", "", "");
+	}
+
+	public PackTweak(String file, String find, String replace, String activation)
+	{
+		this.find = find;
+		this.file = file;
+		this.replace = replace;
+		this.activation = activation;
+	}
+
+	public boolean shouldActivate(String profile)
+	{
+		return !hasActivation() || getActivatedProfiles().contains(profile);
+	}
+
+	public GList<String> getActivatedProfiles()
+	{
+		GList<String> m = new GList<>();
+
+		if(!hasActivation())
+		{
+			return m;
+		}
+
+		if(activation.trim().contains("\\Q|\\E"))
+		{
+			m.add(activation.split("\\Q|\\E"));
+		}
+
+		else
+		{
+			m.add(activation.trim());
+		}
+
+		return m;
+	}
+
+	public boolean hasActivation()
+	{
+		if(activation.trim().isEmpty())
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	public String getFile()
+	{
+		return file;
+	}
+
+	public void setFile(String file)
+	{
+		this.file = file;
+	}
+
+	public String getFind()
+	{
+		return find;
+	}
+
+	public void setFind(String find)
+	{
+		this.find = find;
+	}
+
+	public String getReplace()
+	{
+		return replace;
+	}
+
+	public void setReplace(String replace)
+	{
+		this.replace = replace;
+	}
+
+	public String getActivation()
+	{
+		return activation;
+	}
+
+	public void setActivation(String activation)
+	{
+		this.activation = activation;
+	}
+}

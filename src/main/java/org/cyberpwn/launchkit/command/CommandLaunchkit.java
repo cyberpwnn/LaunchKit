@@ -2,7 +2,8 @@ package org.cyberpwn.launchkit.command;
 
 import org.cyberpwn.launchkit.Commander;
 import org.cyberpwn.launchkit.Environment;
-import org.cyberpwn.launchkit.util.GList;
+
+import ninja.bytecode.shuriken.collections.GList;
 
 public class CommandLaunchkit implements Command
 {
@@ -48,6 +49,6 @@ public class CommandLaunchkit implements Command
 	@Override
 	public GList<String> getAliases()
 	{
-		return new GList<String>().qadd("lk");
+		return new GList<String>().addNonNull("lk");
 	}
 }

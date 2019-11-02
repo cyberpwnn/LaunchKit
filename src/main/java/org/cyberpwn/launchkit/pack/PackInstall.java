@@ -1,6 +1,6 @@
 package org.cyberpwn.launchkit.pack;
 
-import org.cyberpwn.launchkit.util.GList;
+import ninja.bytecode.shuriken.collections.GList;
 
 public class PackInstall
 {

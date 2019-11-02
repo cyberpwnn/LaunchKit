@@ -1,8 +1,8 @@
 package org.cyberpwn.launchkit.command;
 
 import org.cyberpwn.launchkit.Commander;
-import org.cyberpwn.launchkit.util.GList;
-import org.cyberpwn.launchkit.util.L;
+
+import ninja.bytecode.shuriken.collections.GList;
 
 public class CommandHelp implements Command
 {
@@ -37,6 +37,6 @@ public class CommandHelp implements Command
 	@Override
 	public GList<String> getAliases()
 	{
-		return new GList<String>().qadd("kill").qadd("stop").qadd("die");
+		return new GList<String>().add("kill","stop","die");
 	}
 }
