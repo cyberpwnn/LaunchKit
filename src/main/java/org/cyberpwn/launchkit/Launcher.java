@@ -713,13 +713,14 @@ public class Launcher
 					v("Install " + i.getDownload() + " into " + i.getLocation());
 					String name = i.getName().trim().isEmpty() ? UUID.randomUUID().toString().split("\\Q-\\E")[0] : i.getName();
 					String fullname = i.getType().trim().isEmpty() ? name : name + "." + i.getType();
-					File bsa = new File(minecraftFolder, i.getLocation());
+					File bsa = i.getLocation().equals("/") ? minecraftFolder : new File(minecraftFolder, i.getLocation());
 					File f = new File(bsa, fullname);
 					bsa.mkdirs();
 					String u = i.getDownload();
 
 					if(i.getHint().contains("resourcepack"))
 					{
+						v(fullname + " will be configured as a resourcepack in options.txt");
 						resourcepacks.add(f.getName());
 					}
 
@@ -730,11 +731,13 @@ public class Launcher
 							if(u.endsWith("/files"))
 							{
 								u = u.replaceFirst("\\Q/files\\E", "/download");
+								v("Tweaked Curse Downooad URL to: " + u);
 							}
 
 							else if(!u.endsWith("/"))
 							{
 								u = u + "/download";
+								v("Tweaked Curse Downooad URL to: " + u);
 							}
 						}
 
@@ -770,7 +773,7 @@ public class Launcher
 								if(line.trim().startsWith("<a href=\"/minecraft/"))
 								{
 									u = "https://www.curseforge.com" + line.trim().replaceAll("\\Q<a href=\"\\E", "").replaceAll("\\Q\">here</a>\\E", "").trim();
-									w("Mod URL Updated from " + i.getDownload() + " to " + u);
+									w("Curse URL Updated from " + i.getDownload() + " to " + u);
 									break;
 								}
 							}
@@ -786,7 +789,7 @@ public class Launcher
 					{
 						try
 						{
-
+							v("Applying special tweak for optifine download (wink)");
 							URL url = new URL(i.getDownload());
 							HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
 							con.setRequestMethod("GET");
@@ -794,6 +797,7 @@ public class Launcher
 							con.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 							con.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36");
 
+							v("Generated Optifine Download Token...");
 							InputStream in = con.getInputStream();
 							String html = IO.readAll(in);
 							in.close();
@@ -803,6 +807,8 @@ public class Launcher
 								if(line.trim().startsWith("<a href='downloadx?f=OptiFine_"))
 								{
 									u = "https://optifine.net/" + line.trim().replaceAll("\\Q<a href='\\E", "").split("\\Q'\\E")[0].trim();
+
+									v("URL Updated to " + u);
 									break;
 								}
 							}
@@ -912,6 +918,72 @@ public class Launcher
 				{
 					e.printStackTrace();
 				}
+			}
+
+			v("Updated Resource Packs in options.txt");
+		}
+
+		v("Applying Pack Tweaks");
+		for(PackTweak i : newPack.getTweaks())
+		{
+			tweak(newPack, i);
+		}
+	}
+
+	private void tweak(Pack pack, PackTweak i)
+	{
+		if(i.shouldActivate(profile.getName()))
+		{
+			File file = new File(minecraftFolder, i.getFile());
+			v("Applying Tweak on " + file.getPath());
+
+			if(!file.exists() && i.isAddIfMissing())
+			{
+				v(file.getName() + " doesnt exist. Creating it");
+				file.getParentFile().mkdirs();
+
+				try
+				{
+					IO.writeAll(file, "");
+				}
+
+				catch(IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
+
+			try
+			{
+				String text = IO.readAll(file);
+				GList<String> lines = new GList<>(text.split("\\Q\n\\E"));
+				String newText = "";
+				boolean found = false;
+
+				for(String j : lines.copy())
+				{
+					String line = j;
+
+					if(i.getFind().trim().equals(j.trim()) || j.trim().startsWith(i.getFind()))
+					{
+						found = true;
+						line = i.getReplace();
+					}
+
+					newText += line + "\n";
+				}
+
+				if(!found && i.isAddIfMissing())
+				{
+					newText += i.getReplace() + "\n";
+				}
+
+				IO.writeAll(file, newText);
+			}
+
+			catch(Throwable e)
+			{
+				e.printStackTrace();
 			}
 		}
 	}
@@ -1089,7 +1161,7 @@ public class Launcher
 				{
 					Files.copy(new File(Environment.pack.substring("file://".length())).toPath(), packFileNew.toPath(), StandardCopyOption.REPLACE_EXISTING);
 				}
-				
+
 				catch(IOException e)
 				{
 					e.printStackTrace();

@@ -7,19 +7,21 @@ public class PackTweak
 	private String file;
 	private String find;
 	private String replace;
+	private boolean addIfMissing;
 	private String activation;
 
 	public PackTweak()
 	{
-		this("", "", "", "");
+		this("", "", "", "", true);
 	}
 
-	public PackTweak(String file, String find, String replace, String activation)
+	public PackTweak(String file, String find, String replace, String activation, boolean addIfMissing)
 	{
 		this.find = find;
 		this.file = file;
 		this.replace = replace;
 		this.activation = activation;
+		this.addIfMissing = addIfMissing;
 	}
 
 	public boolean shouldActivate(String profile)
@@ -97,5 +99,15 @@ public class PackTweak
 	public void setActivation(String activation)
 	{
 		this.activation = activation;
+	}
+
+	public boolean isAddIfMissing()
+	{
+		return addIfMissing;
+	}
+
+	public void setAddIfMissing(boolean addIfMissing)
+	{
+		this.addIfMissing = addIfMissing;
 	}
 }

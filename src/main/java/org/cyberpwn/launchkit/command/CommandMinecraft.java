@@ -31,6 +31,7 @@ public class CommandMinecraft implements Command
 				try
 				{
 					LaunchKit.launcher.invalidate();
+					sender.sendMessage("cleared .minecraft+.launchkit");
 				}
 
 				catch(Throwable e)

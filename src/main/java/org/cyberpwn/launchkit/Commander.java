@@ -16,9 +16,13 @@ public class Commander extends Thread
 {
 	private GList<Command> commands;
 	private BufferedReader bu;
+	private String lastStatus;
+	private String lastProgress;
 
 	public Commander()
 	{
+		lastStatus = "";
+		lastProgress = "";
 		commands = new GList<>();
 		commands.add(new CommandLaunchkit());
 		commands.add(new CommandMinecraft());
@@ -36,6 +40,26 @@ public class Commander extends Thread
 
 	public void sendMessage(String message)
 	{
+		if(message.startsWith("status="))
+		{
+			if(message.equals(lastStatus))
+			{
+				return;
+			}
+			
+			lastStatus = message;
+		}
+		
+		if(message.startsWith("progress="))
+		{
+			if(message.equals(lastProgress))
+			{
+				return;
+			}
+			
+			lastProgress = message;
+		}
+		
 		System.out.println("@ppm:" + message);
 	}
 
