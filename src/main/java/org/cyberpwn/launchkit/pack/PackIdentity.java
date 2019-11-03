@@ -4,14 +4,14 @@ public class PackIdentity
 {
 	private String name;
 	private String description;
-	private int version;
+	private String version;
 
 	public PackIdentity()
 	{
-		this("", "", 1);
+		this("", "", "1");
 	}
 
-	public PackIdentity(String name, String description, int version)
+	public PackIdentity(String name, String description, String version)
 	{
 		this.name = name;
 		this.description = description;
@@ -38,12 +38,12 @@ public class PackIdentity
 		this.description = description;
 	}
 
-	public int getVersion()
+	public String getVersion()
 	{
 		return version;
 	}
 
-	public void setVersion(int version)
+	public void setVersion(String version)
 	{
 		this.version = version;
 	}

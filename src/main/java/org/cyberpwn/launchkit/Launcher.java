@@ -174,7 +174,7 @@ public class Launcher
 		pack.getGame().setMinecraftVersion("1.8.8");
 		pack.getIdentity().setName("Vanilla 1.8.8");
 		pack.getIdentity().setDescription("Pack Description");
-		pack.getIdentity().setVersion(1);
+		pack.getIdentity().setVersion("1.2");
 
 		PackInstall pUnity = new PackInstall();
 		pUnity.setLocation("resourcepacks");
@@ -199,7 +199,7 @@ public class Launcher
 		pack.getGame().setMinecraftVersion("1.12.2");
 		pack.getIdentity().setName("Vanilla 1.12.2");
 		pack.getIdentity().setDescription("Pack Description");
-		pack.getIdentity().setVersion(1);
+		pack.getIdentity().setVersion("2.33");
 
 		PackInstall pUnity = new PackInstall();
 		pUnity.setLocation("resourcepacks");
@@ -224,7 +224,7 @@ public class Launcher
 		pack.getGame().setMinecraftVersion(Environment.minecraft_version);
 		pack.getIdentity().setName("Forge 1.12.2");
 		pack.getIdentity().setDescription("Pack Description");
-		pack.getIdentity().setVersion(1);
+		pack.getIdentity().setVersion("1.125");
 
 		PackInstall pOptifine = new PackInstall();
 		pOptifine.setLocation("mods");
@@ -650,7 +650,7 @@ public class Launcher
 		{
 			Pack oldPack = UniversalParser.fromJSON(jold, Pack.class);
 
-			if(newPack.getIdentity().getVersion() > oldPack.getIdentity().getVersion())
+			if(!newPack.getIdentity().getVersion().equals(oldPack.getIdentity().getVersion()))
 			{
 				w("Pack Upgrade, Clearing Download Caches");
 				IO.delete(downloadCache);
@@ -662,21 +662,18 @@ public class Launcher
 				w("Pack changed game versioning. Deleting Libraries");
 				IO.delete(launcherLibraries);
 			}
-		}
 
-		catch(Throwable e)
-		{
-
-		}
-
-		if(!update)
-		{
-			if(jold.toString().equals(jnew.toString()))
+			if(!jold.toString().equals(jnew.toString()))
 			{
 				l("Pack Update Detected!");
 				update = true;
 				revertOld = true;
 			}
+		}
+
+		catch(Throwable e)
+		{
+
 		}
 
 		if(update)
