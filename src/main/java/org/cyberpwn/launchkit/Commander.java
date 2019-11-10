@@ -52,6 +52,20 @@ public class Commander extends Thread
 		
 		if(message.startsWith("progress="))
 		{
+			try
+			{
+				double progress = Double.valueOf(message.split("\\Q=\\E")[1]);
+				int pg = (int) (progress * 100);
+				double pgx = ((double)pg / 100D);
+				LaunchKit.launcher.publishProgress(pgx);
+				message = "progress=" + pgx;
+			}
+			
+			catch(Throwable e)
+			{
+				
+			}
+			
 			if(message.equals(lastProgress))
 			{
 				return;

@@ -52,6 +52,27 @@ public class CommandMinecraft implements Command
 					e.printStackTrace();
 				}
 			}
+			
+			else if(args[0].equals("isalive"))
+			{
+				try
+				{
+					if(LaunchKit.launcher.isRunning())
+					{
+						sender.sendMessage("running");
+					}
+					
+					else
+					{
+						sender.sendMessage("notrunning");
+					}
+				}
+
+				catch(Throwable e)
+				{
+					e.printStackTrace();
+				}
+			}
 
 			else if(args[0].equals("start") || args[0].equals("launch"))
 			{

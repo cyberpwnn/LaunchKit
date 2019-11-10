@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.cyberpwn</groupId>
 	<artifactId>LaunchKit</artifactId>
-	<version>1.6</version>
+	<version>1.8</version>
 	<name>LaunchKit</name>
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
@@ -34,6 +34,23 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>1.2</version>
+				<executions>
+					<execution>
+						<id>runbatchfile</id>
+						<phase>package</phase>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<executable>${project.basedir}/target/gui.bat</executable>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

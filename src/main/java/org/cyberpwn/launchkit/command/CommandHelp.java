@@ -24,6 +24,7 @@ public class CommandHelp implements Command
 		System.out.println("/lk env [key] - Get a variable in Environment");
 		System.out.println("/lk env - List Environment");
 		System.out.println("    ");
+		System.out.println("/mc isalive - Check if running (@ppm:running or @ppm:notrunning)");
 		System.out.println("/mc stop,kill,exit - Kills the running game (if any)");
 		System.out.println("/mc invalidate - Invalidate Game's cache & Uninstall game files");
 		System.out.println("/mc validate,update - Installs game files based on pack json");

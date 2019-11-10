@@ -15,6 +15,7 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -29,6 +30,7 @@ import org.cyberpwn.launchkit.pack.PackTweak;
 import org.cyberpwn.launchkit.util.Artifact;
 import org.cyberpwn.launchkit.util.ChronoLatch;
 import org.cyberpwn.launchkit.util.Comp;
+import org.cyberpwn.launchkit.util.DemoGen;
 import org.cyberpwn.launchkit.util.JSONArray;
 import org.cyberpwn.launchkit.util.JSONException;
 import org.cyberpwn.launchkit.util.JSONObject;
@@ -86,10 +88,15 @@ public class Launcher
 	private boolean validated;
 	private Process activeProcess;
 	private boolean downloading;
+	private boolean validating;
 	private ChronoLatch stateLatch;
-
+	private GList<Consumer<Double>> progressListemers;
+	private Pack pack;
+	
 	public Launcher() throws InterruptedException, JSONException, IOException, ClassNotFoundException
 	{
+		validating = false;
+		progressListemers = new GList<>();
 		commander = new Commander();
 		status("Starting");
 		stateLatch = new ChronoLatch(1000);
@@ -147,9 +154,9 @@ public class Launcher
 		{
 			try
 			{
-				writeExample(generateExampleForge1122());
-				writeExample(generateExampleVanilla1122());
-				writeExample(generateExampleVanilla188());
+				writeExample(DemoGen.generateExampleForge1122());
+				writeExample(DemoGen.generateExampleVanilla1122());
+				writeExample(DemoGen.generateExampleVanilla188());
 			}
 
 			catch(Throwable e)
@@ -167,114 +174,6 @@ public class Launcher
 		IO.writeAll(new File(folder, pack.getIdentity().getName() + ".json"), UniversalParser.toJSON(pack).toString(4));
 	}
 
-	private Pack generateExampleVanilla188()
-	{
-		Pack pack = new Pack();
-		pack.getGame().setForgeVersion("no");
-		pack.getGame().setMinecraftVersion("1.8.8");
-		pack.getIdentity().setName("Vanilla 1.8.8");
-		pack.getIdentity().setDescription("Pack Description");
-		pack.getIdentity().setVersion("1.2");
-
-		PackInstall pUnity = new PackInstall();
-		pUnity.setLocation("resourcepacks");
-		pUnity.setDownload("https://www.curseforge.com/minecraft/texture-packs/unity/download/2576530/file");
-		pUnity.setType("zip");
-		pUnity.setHint("resourcepack");
-
-		pack.getInstall().add(pUnity);
-
-		PackProfile defaultProfile = new PackProfile("default");
-		defaultProfile.getLaunchArgs().add("-Xms1m");
-		defaultProfile.getLaunchArgs().add("-Xmx850m");
-		pack.getProfiles().add(defaultProfile);
-
-		return pack;
-	}
-
-	private Pack generateExampleVanilla1122()
-	{
-		Pack pack = new Pack();
-		pack.getGame().setForgeVersion("no");
-		pack.getGame().setMinecraftVersion("1.12.2");
-		pack.getIdentity().setName("Vanilla 1.12.2");
-		pack.getIdentity().setDescription("Pack Description");
-		pack.getIdentity().setVersion("2.33");
-
-		PackInstall pUnity = new PackInstall();
-		pUnity.setLocation("resourcepacks");
-		pUnity.setDownload("https://www.curseforge.com/minecraft/texture-packs/unity/download/2576530/file");
-		pUnity.setType("zip");
-		pUnity.setHint("resourcepack");
-
-		pack.getInstall().add(pUnity);
-
-		PackProfile defaultProfile = new PackProfile("default");
-		defaultProfile.getLaunchArgs().add("-Xms1m");
-		defaultProfile.getLaunchArgs().add("-Xmx850m");
-		pack.getProfiles().add(defaultProfile);
-
-		return pack;
-	}
-
-	private Pack generateExampleForge1122()
-	{
-		Pack pack = new Pack();
-		pack.getGame().setForgeVersion(Environment.forge_version);
-		pack.getGame().setMinecraftVersion(Environment.minecraft_version);
-		pack.getIdentity().setName("Forge 1.12.2");
-		pack.getIdentity().setDescription("Pack Description");
-		pack.getIdentity().setVersion("1.125");
-
-		PackInstall pOptifine = new PackInstall();
-		pOptifine.setLocation("mods");
-		pOptifine.setDownload("https://optifine.net/adloadx?f=OptiFine_1.12.2_HD_U_E3.jar");
-		pOptifine.setHint("optifine");
-		pOptifine.setType("jar");
-
-		PackInstall pDysurr = new PackInstall();
-		pDysurr.setLocation("mods");
-		pDysurr.setDownload("https://www.curseforge.com/minecraft/mc-mods/dynamic-surroundings/download");
-		pDysurr.setType("jar");
-		pDysurr.setActivation("ultra");
-
-		PackInstall pUnity = new PackInstall();
-		pUnity.setLocation("resourcepacks");
-		pUnity.setDownload("https://www.curseforge.com/minecraft/texture-packs/unity/download");
-		pUnity.setType("zip");
-		pUnity.setHint("resourcepack");
-
-		PackTweak t = new PackTweak();
-		t.setFile("config/splash.properties");
-		t.setFind("showMemory=true");
-		t.setReplace("showMemory=false");
-		t.setActivation("default");
-
-		pack.getTweaks().add(t);
-
-		pack.getInstall().add(pOptifine);
-		pack.getInstall().add(pDysurr);
-		pack.getInstall().add(pUnity);
-
-		PackProfile defaultProfile = new PackProfile("default");
-		defaultProfile.getLaunchArgs().add("-Xms1m");
-		defaultProfile.getLaunchArgs().add("-Xmx1g");
-
-		PackProfile ultra = new PackProfile("ultra");
-		ultra.getLaunchArgs().add("-Xms1m");
-		ultra.getLaunchArgs().add("-Xmx2g");
-		ultra.getActivation().add("total_system_memory >= 8192");
-		ultra.getActivation().add("free_system_memory >= 4096");
-		ultra.getActivation().add("used_system_memory <= 4096");
-		ultra.getActivation().add("cpu_threads >= 4");
-		ultra.getActivation().add("free_space > 2000");
-
-		pack.getProfiles().add(defaultProfile);
-		pack.getProfiles().add(ultra);
-
-		return pack;
-	}
-
 	public void emitProgress()
 	{
 		if(downloading)
@@ -284,7 +183,7 @@ public class Launcher
 				status(launcherStatus);
 			}
 
-			commander.sendMessage("progress=" + ((double) ((int) (downloadManager.getProgress().getProgress() * 100D))) / 10000D);
+			commander.sendMessage("progress=" + M.clip(0, 1D, Math.abs(((double) ((int) (downloadManager.getProgress().getProgress() * 100D))) / 10000D)));
 		}
 	}
 
@@ -349,6 +248,19 @@ public class Launcher
 		return this;
 	}
 
+	public boolean isRunning()
+	{
+		if(activeProcess != null)
+		{
+			if(activeProcess.isAlive())
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	public Launcher killGame()
 	{
 		if(activeProcess != null)
@@ -364,7 +276,21 @@ public class Launcher
 
 	public Launcher launch() throws JSONException, IOException, InterruptedException, IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, SecurityException
 	{
+		if(validating)
+		{
+			w("Not Launching! Still Validating!");
+			return this;
+		}
+
+		if(isRunning())
+		{
+			w("Minecraft is already running. Please kill it first or use a seperate minecraft instance.");
+			status("error-already-running");
+			return this;
+		}
+
 		validate();
+		commander.sendMessage("progress=-1");
 
 		if(!authenticated)
 		{
@@ -468,6 +394,7 @@ public class Launcher
 		ProcessBuilder pb = new ProcessBuilder(parameters);
 		pb.directory(minecraftFolder);
 		activeProcess = pb.start();
+		commander.sendMessage("progress=1");
 		new StreamGobbler(activeProcess.getInputStream(), "Client|OUT");
 		new StreamGobbler(activeProcess.getErrorStream(), "Client|ERR");
 		commander.sendMessage("running");
@@ -480,42 +407,12 @@ public class Launcher
 				{
 					int code = activeProcess.waitFor();
 					l("Client Process exited with code " + code);
+					commander.sendMessage("progress=1");
 					commander.sendMessage("stopped");
 
 					if(code != 0)
 					{
-						long ms = M.ms();
-						File crashLog = null;
-						File clogs = new File(minecraftFolder, "crash-reports");
-
-						if(clogs.exists() && clogs.listFiles().length > 0)
-						{
-							long mms = Long.MAX_VALUE;
-							File latest = null;
-
-							for(File i : clogs.listFiles())
-							{
-								if(Math.abs(i.lastModified() - ms) < mms)
-								{
-									mms = Math.abs(i.lastModified() - ms);
-									latest = i;
-								}
-							}
-
-							crashLog = latest;
-						}
-
-						if(crashLog == null)
-						{
-							File f = new File(minecraftFolder, "logs/latest.log");
-
-							if(f.exists())
-							{
-								crashLog = f;
-							}
-						}
-
-						commander.sendMessage("crashed=" + crashLog == null ? "404" : crashLog.getAbsolutePath());
+						commander.sendMessage("crashed");
 					}
 
 					activeProcess = null;
@@ -537,30 +434,49 @@ public class Launcher
 
 	public Launcher validate() throws InterruptedException, ZipException, IOException, IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, SecurityException, JSONException
 	{
+		if(validating)
+		{
+			w("Validation is already in progress!");
+			status("error-already-validating");
+			return this;
+		}
+
+		validating = true;
 		downloading = true;
-		status("Validating Launch");
-		validatePackMeta();
-		swapQueues();
-		validatePack();
-		validateVersionManifest();
-		validateForgeUniversal();
-		swapQueues();
-		findMinecraftVersion();
-		extractForgeManifest();
-		swapQueues();
-		validateAssets();
-		validateMinecraft();
-		validateMinecraftLibraries();
-		validateForgeLibraries();
-		validateMinecraftConfiguration();
-		swapQueues();
-		validateNatives();
-		validateCleaning();
+		try
+		{
+			status("Validating Launch");
+			validatePackMeta();
+			swapQueues();
+			validatePack();
+			validateVersionManifest();
+			validateForgeUniversal();
+			swapQueues();
+			findMinecraftVersion();
+			extractForgeManifest();
+			swapQueues();
+			validateAssets();
+			validateMinecraft();
+			validateMinecraftLibraries();
+			validateForgeLibraries();
+			validateMinecraftConfiguration();
+			swapQueues();
+			validateNatives();
+			validateCleaning();
+			swapQueues();
+		}
+
+		catch(Throwable e)
+		{
+			e.printStackTrace();
+		}
+
 		commander.sendMessage("progress=1");
 		status("Ready");
 		commander.sendMessage("validated");
 		validated = true;
 		downloading = false;
+		validating = false;
 
 		return this;
 	}
@@ -696,6 +612,8 @@ public class Launcher
 		{
 
 		}
+		
+		this.pack = newPack;
 	}
 
 	private void validatePackInstall(Pack newPack)
@@ -1174,7 +1092,45 @@ public class Launcher
 
 	private String javaw()
 	{
-		return System.getProperty("java.home") + File.separator + "bin" + File.separator + "javaw.exe";
+		return System.getProperty("java.home") + File.separator + "bin" + File.separator + jex();
+	}
+
+	private String jex()
+	{
+		if(isWindows())
+		{
+			return "javaw.exe";
+		}
+		
+		else if(isMac())
+		{
+			return "java";
+		}
+		
+		else
+		{
+			return "java";
+		}
+	}
+
+	public static boolean isWindows()
+	{
+		return (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0);
+	}
+
+	public static boolean isMac()
+	{
+		return (System.getProperty("os.name").toLowerCase().indexOf("mac") >= 0);
+	}
+
+	public static boolean isUnix()
+	{
+		return (System.getProperty("os.name").toLowerCase().indexOf("nix") >= 0 || System.getProperty("os.name").toLowerCase().indexOf("nux") >= 0 || System.getProperty("os.name").toLowerCase().indexOf("aix") > 0);
+	}
+
+	public static boolean isSolaris()
+	{
+		return (System.getProperty("os.name").toLowerCase().indexOf("sunos") >= 0);
 	}
 
 	private void validateNatives()
@@ -1500,7 +1456,7 @@ public class Launcher
 			Files.setAttribute(f.toPath(), "dos:hidden", !hidden);
 		}
 
-		catch(IOException e)
+		catch(Throwable e)
 		{
 			w("Failed to set visibility:" + hidden + " on file " + f.getPath());
 		}
@@ -1753,5 +1709,20 @@ public class Launcher
 	public String getPlatform()
 	{
 		return platform;
+	}
+
+	public void addProgressListener(Consumer<Double> p)
+	{
+		progressListemers.add(p);
+	}
+
+	public void publishProgress(double pgx)
+	{
+		progressListemers.forEach((p) -> p.accept(pgx));
+	}
+
+	public Pack getPack()
+	{
+		return pack;
 	}
 }
