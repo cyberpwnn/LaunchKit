@@ -24,6 +24,7 @@ Using the output stream to LaunchKit (assuming you started the process) you can 
 |---------|-------|
 | `/help ` | USE IT DAMMIT |
 | `/launchkit env key value` | Sets a launchkit environment variable |
+| `/launchkit set pack <url to config raw>` | Sets what configuration launchkit uses.|
 | `/launchkit stop` | Gracefully stops launchkit. Does not kill the client if it's running. |
 | `/minecraft stop` | Crashes minecraft if it's running. Does not kill launchkit |
 | `/minecraft validate` | Downloads any missing resources and properties to prepare for launch. |
