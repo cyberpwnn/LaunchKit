@@ -1,6 +1,6 @@
 package org.cyberpwn.launchkit.pack;
 
-import ninja.bytecode.shuriken.collections.GList;
+import ninja.bytecode.shuriken.collections.KList;
 
 public class PackTweak
 {
@@ -29,9 +29,9 @@ public class PackTweak
 		return !hasActivation() || getActivatedProfiles().contains(profile);
 	}
 
-	public GList<String> getActivatedProfiles()
+	public KList<String> getActivatedProfiles()
 	{
-		GList<String> m = new GList<>();
+		KList<String> m = new KList<>();
 
 		if(!hasActivation())
 		{

@@ -10,11 +10,11 @@ import org.cyberpwn.launchkit.command.CommandHelp;
 import org.cyberpwn.launchkit.command.CommandLaunchkit;
 import org.cyberpwn.launchkit.command.CommandMinecraft;
 
-import ninja.bytecode.shuriken.collections.GList;
+import ninja.bytecode.shuriken.collections.KList;
 
 public class Commander extends Thread
 {
-	private GList<Command> commands;
+	private KList<Command> commands;
 	private BufferedReader bu;
 	private String lastStatus;
 	private String lastProgress;
@@ -23,7 +23,7 @@ public class Commander extends Thread
 	{
 		lastStatus = "";
 		lastProgress = "";
-		commands = new GList<>();
+		commands = new KList<>();
 		commands.add(new CommandLaunchkit());
 		commands.add(new CommandMinecraft());
 		commands.add(new CommandExit());
@@ -105,7 +105,7 @@ public class Commander extends Thread
 
 			if(node.contains(" "))
 			{
-				GList<String> nodes = new GList<String>(node.split("\\Q \\E"));
+				KList<String> nodes = new KList<String>(node.split("\\Q \\E"));
 				node = nodes.get(0);
 				nodes.remove(0);
 				args = nodes.toArray(new String[nodes.size()]);

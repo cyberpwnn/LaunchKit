@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="LaunchKit (1)" />
+        <module name="LaunchKit" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="LaunchKit" target="1.8" />
+      <module name="LaunchKit (1)" target="1.8" />
+      <module name="LaunchKit (2)" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+</project>

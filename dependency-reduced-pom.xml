@@ -52,14 +52,15 @@
       <url>https://libraries.minecraft.net/</url>
     </repository>
     <repository>
-      <id>pub</id>
-      <url>http://nexus.mpm.care/content/repositories/pub</url>
+      <id>central</id>
+      <name>Maven Repository Switchboard</name>
+      <url>http://repo1.maven.org/maven2</url>
     </repository>
   </repositories>
   <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 </project>
 

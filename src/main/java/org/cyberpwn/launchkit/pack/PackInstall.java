@@ -1,6 +1,6 @@
 package org.cyberpwn.launchkit.pack;
 
-import ninja.bytecode.shuriken.collections.GList;
+import ninja.bytecode.shuriken.collections.KList;
 
 public class PackInstall
 {
@@ -10,6 +10,8 @@ public class PackInstall
 	private String type;
 	private String activation;
 	private String hint;
+	private String into;
+	private String sub;
 
 	public PackInstall()
 	{
@@ -22,8 +24,10 @@ public class PackInstall
 		this.location = location;
 		this.activation = activation;
 		hint = "";
+		into = "";
 		name = "";
 		type = "";
+		sub = "";
 	}
 
 	public boolean shouldActivate(String profile)
@@ -31,9 +35,9 @@ public class PackInstall
 		return !hasActivation() || getActivatedProfiles().contains(profile);
 	}
 
-	public GList<String> getActivatedProfiles()
+	public KList<String> getActivatedProfiles()
 	{
-		GList<String> m = new GList<>();
+		KList<String> m = new KList<>();
 
 		if(!hasActivation())
 		{
@@ -101,6 +105,26 @@ public class PackInstall
 	public void setHint(String hint)
 	{
 		this.hint = hint;
+	}
+
+	public String getSub()
+	{
+		return sub;
+	}
+
+	public void setSub(String sub)
+	{
+		this.sub = sub;
+	}
+
+	public String getInto()
+	{
+		return into;
+	}
+
+	public void setInto(String into)
+	{
+		this.into = into;
 	}
 
 	public String getName()

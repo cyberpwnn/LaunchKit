@@ -3,7 +3,7 @@ package org.cyberpwn.launchkit.command;
 import org.cyberpwn.launchkit.Commander;
 import org.cyberpwn.launchkit.util.L;
 
-import ninja.bytecode.shuriken.collections.GList;
+import ninja.bytecode.shuriken.collections.KList;
 
 public class CommandExit implements Command
 {
@@ -21,8 +21,8 @@ public class CommandExit implements Command
 	}
 
 	@Override
-	public GList<String> getAliases()
+	public KList<String> getAliases()
 	{
-		return new GList<String>().add("kill", "stop", "die");
+		return new KList<String>().add("kill", "stop", "die");
 	}
 }

@@ -3,7 +3,7 @@ package org.cyberpwn.launchkit.command;
 import org.cyberpwn.launchkit.Commander;
 import org.cyberpwn.launchkit.Environment;
 
-import ninja.bytecode.shuriken.collections.GList;
+import ninja.bytecode.shuriken.collections.KList;
 
 public class CommandLaunchkit implements Command
 {
@@ -27,7 +27,7 @@ public class CommandLaunchkit implements Command
 			{
 				if(args.length >= 3)
 				{
-					GList<String> m = new GList<String>(args);
+					KList<String> m = new KList<String>(args);
 					m.remove(0);
 					m.remove(0);
 					Environment.set(args[1], m.toString(" "));
@@ -47,8 +47,8 @@ public class CommandLaunchkit implements Command
 	}
 
 	@Override
-	public GList<String> getAliases()
+	public KList<String> getAliases()
 	{
-		return new GList<String>().addNonNull("lk");
+		return new KList<String>().addNonNull("lk");
 	}
 }

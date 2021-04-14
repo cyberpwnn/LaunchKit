@@ -49,24 +49,38 @@ public class DownloadManager
 
 	private void clean(File f)
 	{
-		if(f.isDirectory())
+		try
 		{
-			for(File i : f.listFiles())
+			if(f.isDirectory())
 			{
-				clean(i);
+				for(File i : f.listFiles())
+				{
+					clean(i);
+				}
+			}
+
+			else
+			{
+				try
+				{
+					if(!f.getName().split("\\Q.\\E")[1].equals("" + getChronoSegment()))
+					{
+						IO.deleteUp(f);
+						L.LOG.v("Deleting " + f.getPath());
+					}
+				}
+
+				catch(Throwable e)
+				{
+					IO.deleteUp(f);
+					L.LOG.v("Deleting " + f.getPath());
+				}
 			}
 		}
 
-		else
+		catch(Throwable e)
 		{
-			if(!f.getName().split("\\Q.\\E")[1].equals("" + getChronoSegment()))
-			{
-				slowService.submit(() ->
-				{
-					IO.deleteUp(f);
-					L.LOG.v("Cleaning Cache: " + f.getName());
-				});
-			}
+
 		}
 	}
 

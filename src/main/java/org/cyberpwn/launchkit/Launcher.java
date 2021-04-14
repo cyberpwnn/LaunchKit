@@ -22,6 +22,10 @@ import java.util.zip.ZipFile;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import ninja.bytecode.shuriken.collections.KList;
+import ninja.bytecode.shuriken.collections.KMap;
+import ninja.bytecode.shuriken.io.IO;
+import org.apache.commons.io.FileUtils;
 import org.cyberpwn.launchkit.net.DownloadManager;
 import org.cyberpwn.launchkit.pack.Pack;
 import org.cyberpwn.launchkit.pack.PackInstall;
@@ -44,9 +48,6 @@ import org.zeroturnaround.zip.ZipUtil;
 
 import com.google.common.collect.Lists;
 
-import ninja.bytecode.shuriken.collections.GList;
-import ninja.bytecode.shuriken.collections.GMap;
-import ninja.bytecode.shuriken.io.IO;
 
 public class Launcher
 {
@@ -90,13 +91,13 @@ public class Launcher
 	private boolean downloading;
 	private boolean validating;
 	private ChronoLatch stateLatch;
-	private GList<Consumer<Double>> progressListemers;
+	private KList<Consumer<Double>> progressListemers;
 	private Pack pack;
 	
 	public Launcher() throws InterruptedException, JSONException, IOException, ClassNotFoundException
 	{
 		validating = false;
-		progressListemers = new GList<>();
+		progressListemers = new KList<>();
 		commander = new Commander();
 		status("Starting");
 		stateLatch = new ChronoLatch(1000);
@@ -310,7 +311,7 @@ public class Launcher
 		}
 
 		l("Using Java at " + javaw());
-		GList<String> parameters = new GList<>();
+		KList<String> parameters = new KList<>();
 		JSONObject meta = Environment.forge_enabled ? forgeVersion : minecraftVersion;
 		String mainClass = meta.getString("mainClass");
 		String t = meta.getString("minecraftArguments");
@@ -618,7 +619,7 @@ public class Launcher
 
 	private void validatePackInstall(Pack newPack)
 	{
-		GList<String> resourcepacks = new GList<>();
+		KList<String> resourcepacks = new KList<>();
 		for(PackInstall i : newPack.getInstall())
 		{
 			try
@@ -737,52 +738,64 @@ public class Launcher
 
 					L.LOG.v("Downloading " + i.getDownload());
 
-					downloadManager.downloadCached(u, f, -1, new Runnable()
+					if(i.getHint().contains("extract"))
 					{
-						@Override
-						public void run()
+						downloadManager.downloadCached(u, f, -1, new Runnable()
 						{
-							L.LOG.v("Downloaded " + i.getDownload() + " to " + f.getPath());
-
-							if(i.getHint().contains("extract"))
+							@Override
+							public void run()
 							{
+								L.LOG.v("Downloaded " + i.getDownload() + " to " + f.getPath());
 								v("Extracting " + f.getPath() + "'s contents into " + bsa.getPath());
 								ZipUtil.unpack(f, bsa);
 								IO.delete(f);
 							}
+						});
+					}
 
-							if(i.getHint().contains("repository"))
+					if(i.getHint().contains("repository"))
+					{
+						File rfile = new File(downloadCache, "repos/" +IO.hash(u) + ".zip");
+						File rfold = new File(downloadCache, "repos/" +IO.hash(u));
+						rfile.getParentFile().mkdirs();
+						rfold.mkdirs();
+						downloadManager.downloadCached(u, rfile, -1, new Runnable()
+						{
+							@Override
+							public void run()
 							{
-								File temp = new File(bsa, ".tmp/" + UUID.randomUUID());
+								L.LOG.v("Downloaded " + i.getDownload() + " to " + rfile.getPath());
+
+								String into = i.getInto();
+								String sub = i.getSub();
+								File temp = new File(downloadCache, ".tmp/" + IO.hash(rfile.getAbsolutePath()));
 								temp.mkdirs();
-								v("Extracting " + f.getPath() + "'s Repo contents into " + bsa.getPath());
-								ZipUtil.unpack(f, temp);
+								File target = new File(temp, sub);
+								v("Extracting " + rfile.getPath() + (" (/" + sub + ") ") + " Repo contents into " + target.getPath());
+								ZipUtil.unpack(rfile, temp);
 
 								File dir = null;
+
 								for(File i : temp.listFiles())
 								{
 									if(i.isDirectory())
 									{
-										dir = i;
+										temp = i;
 										break;
 									}
 								}
 
-								if(dir != null && dir.exists())
-								{
-									for(File i : dir.listFiles())
-									{
-										move(i, new File(bsa, i.getName()));
-										v("Importing File from Repo: " + i.getName());
-									}
+								File ff = new File(bsa, into);
+
+								ff.mkdirs();
+								try {
+									FileUtils.copyDirectory(new File(temp, sub), ff);
+								} catch (IOException e) {
+									e.printStackTrace();
 								}
-								IO.delete(temp);
-								IO.delete(f);
-								IO.delete(new File(bsa, "README.md"));
-								IO.delete(new File(bsa, ".tmp"));
 							}
-						}
-					});
+						});
+					}
 				}
 			}
 
@@ -814,7 +827,7 @@ public class Launcher
 			{
 				try
 				{
-					GList<String> m = new GList<String>(IO.readAll(f).split("\\Q\n\\E"));
+					KList<String> m = new KList<String>(IO.readAll(f).split("\\Q\n\\E"));
 
 					for(String i : m.copy())
 					{
@@ -871,7 +884,7 @@ public class Launcher
 			try
 			{
 				String text = IO.readAll(file);
-				GList<String> lines = new GList<>(text.split("\\Q\n\\E"));
+				KList<String> lines = new KList<>(text.split("\\Q\n\\E"));
 				String newText = "";
 				boolean found = false;
 
@@ -982,14 +995,14 @@ public class Launcher
 		}
 
 		boolean fail = false;
-		GMap<String, Double> mappers = new GMap<>();
+		KMap<String, Double> mappers = new KMap<>();
 		mappers.put("total_system_memory", (double) Platform.MEMORY.PHYSICAL.getTotalMemory() / 1024D / 1024D);
 		mappers.put("free_system_memory", (double) Platform.MEMORY.PHYSICAL.getFreeMemory() / 1024D / 1024D);
 		mappers.put("used_system_memory", (double) Platform.MEMORY.PHYSICAL.getUsedMemory() / 1024D / 1024D);
 		mappers.put("cpu_threads", (double) Platform.CPU.getAvailableProcessors());
 		mappers.put("free_space", (double) Platform.STORAGE.getFreeSpace(root) / 1024D / 1024D);
 
-		GMap<String, Comp> functions = new GMap<>();
+		KMap<String, Comp> functions = new KMap<>();
 		functions.put("==", (a, b) -> a == b);
 		functions.put(">=", (a, b) -> a >= b);
 		functions.put("<=", (a, b) -> a <= b);
@@ -1369,7 +1382,7 @@ public class Launcher
 
 			if(!forgeVersionFile.exists())
 			{
-				GList<String> e = IO.listEntries(forgeUniversal);
+				KList<String> e = IO.listEntries(forgeUniversal);
 
 				if(e.contains("version.json"))
 				{

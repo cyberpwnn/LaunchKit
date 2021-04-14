@@ -2,11 +2,11 @@ package org.cyberpwn.launchkit.command;
 
 import org.cyberpwn.launchkit.Commander;
 
-import ninja.bytecode.shuriken.collections.GList;
+import ninja.bytecode.shuriken.collections.KList;
 
 public interface Command
 {
-	public GList<String> getAliases();
+	public KList<String> getAliases();
 
 	public String getName();
 
