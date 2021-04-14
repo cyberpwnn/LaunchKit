@@ -76,7 +76,7 @@ public class Environment
 
 	// Forge
 	public static boolean forge_enabled = true;
-	public static String forge_version = "14.23.5.2838";
+	public static String forge_version = "14.23.5.2847";
 
 	// Game
 	public static String minecraft_version = "1.12.2";
