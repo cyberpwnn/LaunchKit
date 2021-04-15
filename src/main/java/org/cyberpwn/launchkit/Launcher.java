@@ -24,6 +24,9 @@ import javax.net.ssl.HttpsURLConnection;
 
 import ninja.bytecode.shuriken.collections.KList;
 import ninja.bytecode.shuriken.collections.KMap;
+import ninja.bytecode.shuriken.collections.KSet;
+import ninja.bytecode.shuriken.config.Props;
+import ninja.bytecode.shuriken.execution.J;
 import ninja.bytecode.shuriken.io.IO;
 import org.apache.commons.io.FileUtils;
 import org.cyberpwn.launchkit.net.DownloadManager;
@@ -53,6 +56,7 @@ public class Launcher
 {
 	private final DownloadManager downloadManager;
 	private final Commander commander;
+	private final KSet<String> extracted = new KSet<>();
 	private final File root;
 	private final File launcherRoot;
 	private final File launcherLibraries;
@@ -444,32 +448,36 @@ public class Launcher
 
 		validating = true;
 		downloading = true;
-		try
-		{
-			status("Validating Launch");
-			validatePackMeta();
-			swapQueues();
-			validatePack();
-			validateVersionManifest();
-			validateForgeUniversal();
-			swapQueues();
-			findMinecraftVersion();
-			extractForgeManifest();
-			swapQueues();
-			validateAssets();
-			validateMinecraft();
-			validateMinecraftLibraries();
-			validateForgeLibraries();
-			validateMinecraftConfiguration();
-			swapQueues();
-			validateNatives();
-			validateCleaning();
-			swapQueues();
-		}
 
-		catch(Throwable e)
+		for(int i = 0; i < 3; i++)
 		{
-			e.printStackTrace();
+			try
+			{
+				status("Validating Launch");
+				J.attemptAndThrow(this::validatePackMeta);
+				J.attemptAndThrow(this::swapQueues);
+				J.attemptAndThrow(this::validatePack);
+				J.attemptAndThrow(this::validateVersionManifest);
+				J.attemptAndThrow(this::validateForgeUniversal);
+				J.attemptAndThrow(this::swapQueues);
+				J.attemptAndThrow(this::findMinecraftVersion);
+				J.attemptAndThrow(this::extractForgeManifest);
+				J.attemptAndThrow(this::swapQueues);
+				J.attemptAndThrow(this::validateAssets);
+				J.attemptAndThrow(this::validateMinecraft);
+				J.attemptAndThrow(this::validateMinecraftLibraries);
+				J.attemptAndThrow(this::validateForgeLibraries);
+				J.attemptAndThrow(this::validateMinecraftConfiguration);
+				J.attemptAndThrow(this::swapQueues);
+				J.attemptAndThrow(this::validateNatives);
+				J.attemptAndThrow(this::validateCleaning);
+				J.attemptAndThrow(this::swapQueues);
+			}
+
+			catch(Throwable e)
+			{
+				e.printStackTrace();
+			}
 		}
 
 		commander.sendMessage("progress=1");
@@ -478,6 +486,13 @@ public class Launcher
 		validated = true;
 		downloading = false;
 		validating = false;
+
+
+		v("Applying Pack Tweaks");
+		for(PackTweak i : pack.getTweaks())
+		{
+			tweak(pack, i);
+		}
 
 		return this;
 	}
@@ -615,6 +630,39 @@ public class Launcher
 		}
 		
 		this.pack = newPack;
+	}
+
+	private boolean isUpToDate(String data)
+	{
+		String h = data + pack.getIdentity().getVersion();
+		String r = Props.of("lk").get("version-" + IO.hash(data));
+		r = r == null ? "" : r;
+		return r.equals(IO.hash(h));
+	}
+
+	private void setUpToDate(String data)
+	{
+		String h = data + pack.getIdentity().getVersion();
+		Props.of("lk").put("version-" + IO.hash(data), IO.hash(h));
+	}
+
+	private void unpackCached(File zip, File dest)
+	{
+		if(!isUpToDate(zip.getAbsolutePath()))
+		{
+			setUpToDate(zip.getAbsolutePath());
+			String k = zip.getAbsolutePath() + "-" + dest.getAbsolutePath();
+			if(!extracted.contains(k))
+			{
+				ZipUtil.unpack(zip, dest);
+				extracted.add(k);
+			}
+		}
+	}
+
+	String getVersion()
+	{
+		return getPack().getIdentity().getVersion();
 	}
 
 	private void validatePackInstall(Pack newPack)
@@ -755,8 +803,8 @@ public class Launcher
 
 					if(i.getHint().contains("repository"))
 					{
-						File rfile = new File(downloadCache, "repos/" +IO.hash(u) + ".zip");
-						File rfold = new File(downloadCache, "repos/" +IO.hash(u));
+						File rfile = new File(downloadCache, "repos/" +IO.hash(u+getVersion()) + ".zip");
+						File rfold = new File(downloadCache, "repos/" +IO.hash(u+getVersion()));
 						rfile.getParentFile().mkdirs();
 						rfold.mkdirs();
 						downloadManager.downloadCached(u, rfile, -1, new Runnable()
@@ -768,11 +816,11 @@ public class Launcher
 
 								String into = i.getInto();
 								String sub = i.getSub();
-								File temp = new File(downloadCache, ".tmp/" + IO.hash(rfile.getAbsolutePath()));
+								File temp = new File(downloadCache, "version-lock-" + versionType + "/" + IO.hash(rfile.getAbsolutePath()));
 								temp.mkdirs();
 								File target = new File(temp, sub);
 								v("Extracting " + rfile.getPath() + (" (/" + sub + ") ") + " Repo contents into " + target.getPath());
-								ZipUtil.unpack(rfile, temp);
+								unpackCached(rfile, temp);
 
 								File dir = null;
 

@@ -114,10 +114,20 @@ public class J
 
 		return false;
 	}
-	
+
 	public static boolean attempt(NastyRunnable r)
 	{
 		return attemptCatch(r) == null;
+	}
+
+	public static void attemptAndThrow(NastyRunnable r)
+	{
+		Throwable e = attemptCatch(r);
+
+		if(e != null)
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	public static Throwable attemptCatch(NastyRunnable r)

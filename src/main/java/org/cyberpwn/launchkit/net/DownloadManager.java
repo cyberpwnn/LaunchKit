@@ -63,17 +63,23 @@ public class DownloadManager
 			{
 				try
 				{
-					if(!f.getName().split("\\Q.\\E")[1].equals("" + getChronoSegment()))
+					if(M.ms() - f.lastModified() > TimeUnit.DAYS.toMillis(3))
 					{
-						IO.deleteUp(f);
-						L.LOG.v("Deleting " + f.getPath());
+						if(!f.getName().split("\\Q.\\E")[1].equals("" + getChronoSegment()))
+						{
+							IO.deleteUp(f);
+							L.LOG.v("Deleting " + f.getPath());
+						}
 					}
 				}
 
 				catch(Throwable e)
 				{
-					IO.deleteUp(f);
-					L.LOG.v("Deleting " + f.getPath());
+					if(M.ms() - f.lastModified() > TimeUnit.DAYS.toMillis(3))
+					{
+						IO.deleteUp(f);
+						L.LOG.v("Deleting " + f.getPath());
+					}
 				}
 			}
 		}
