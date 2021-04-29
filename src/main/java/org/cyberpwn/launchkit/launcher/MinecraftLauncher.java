@@ -185,49 +185,47 @@ public class MinecraftLauncher implements Launcher
         {
             showAuthDialog();
         }
+
+        if(!authenticated)
+        {
+            authenticate();
+        }
     }
 
     private void showAuthDialog() {
         AtomicBoolean done = new AtomicBoolean(false);
-        J.a(() -> {EventQueue.invokeLater(() -> {
-            JFrame f = new JFrame();
-            LoginDialog ld = null;
-            LoginDialog finalLd = ld;
-            Consumer<String> cb = (up) -> {
-                String[] upa = up.split("\\Q:X-:-X:\\E");
-                try {
-                    authenticateWithCredentials(upa[0], upa[1]);
-                    f.setVisible(false);
+        J.a(() -> EventQueue.invokeLater(() -> {
+        JFrame f = new JFrame();
+        LoginDialog ld = null;
+        LoginDialog finalLd = ld;
+        Consumer<String> cb = (up) -> {
+            String[] upa = up.split("\\Q:X-:-X:\\E");
+            try {
+                authenticateWithCredentials(upa[0], upa[1]);
+                f.setVisible(false);
+                try
+                {
                     finalLd.setVisible(false);
-
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
 
-                if(authenticated)
+                catch(Throwable e)
                 {
-                    done.set(true);
+
                 }
 
-                else
-                {
-                    L.v("RETRY");
-                    showAuthDialog();
-                }
-            };
-            ld = new LoginDialog(f, cb);
-            ld.setVisible(true);
-            ld.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
-            final JButton btnLogin = new JButton("Click to login");
-            f.setSize(300, 100);
-            f.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
-            f.setLayout(new FlowLayout());
-            f.getContentPane().add(btnLogin);
-            f.setVisible(true);
-            f.show();
-        });});
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            done.set(true);
+        };
+
+        ld = new LoginDialog(f, cb);
+        ld.setVisible(true);
+        ld.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
+    }));
 
         while(!done.get())
         {
@@ -521,7 +519,7 @@ public class MinecraftLauncher implements Launcher
 
     public File getForgeUniversalLibraryFile()
     {
-        return new File(getLauncherLibrariesFolder(), "net/minecraftforge/forge/" + getGameVersion() + "/" + getForgeVersion() + "/forge-" + getGameVersion() + "-" + getForgeVersionFile() + "-universal.jar");
+        return new File(getLauncherLibrariesFolder(), "net/minecraftforge/forge/" + getGameVersion() + "/" + getForgeVersion() + "/forge-" + getGameVersion() + "-" + getForgeVersion() + "-universal.jar");
     }
 
     private void validateForgeVersion()

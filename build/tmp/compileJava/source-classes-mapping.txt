@@ -1,5 +1,5 @@
-org/cyberpwn/launchkit/multimc/MMCInstance.java
- org.cyberpwn.launchkit.multimc.MMCInstance
+org/cyberpwn/launchkit/LauncherConfiguration.java
+ org.cyberpwn.launchkit.LauncherConfiguration
 org/cyberpwn/launchkit/launcher/Launcher.java
  org.cyberpwn.launchkit.launcher.Launcher
 org/cyberpwn/launchkit/util/OSF.java
@@ -29,8 +29,8 @@ org/cyberpwn/launchkit/util/LoginDialog.java
  org.cyberpwn.launchkit.util.LoginDialog
  org.cyberpwn.launchkit.util.LoginDialog$1
  org.cyberpwn.launchkit.util.LoginDialog$2
-org/cyberpwn/launchkit/LauncherConfiguration.java
- org.cyberpwn.launchkit.LauncherConfiguration
+org/cyberpwn/launchkit/multimc/MMCInstance.java
+ org.cyberpwn.launchkit.multimc.MMCInstance
 org/cyberpwn/launchkit/LaunchKit.java
  org.cyberpwn.launchkit.LaunchKit
 org/cyberpwn/launchkit/launcher/MinecraftLauncher.java

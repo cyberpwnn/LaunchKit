@@ -6,7 +6,7 @@ plugins {
 }
 
 group 'org.cyberpwn'
-version '2.0'
+version '2.0.3'
 
 shadowJar {
     zip64 true
