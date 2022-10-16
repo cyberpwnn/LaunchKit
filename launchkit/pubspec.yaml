@@ -5,6 +5,11 @@ environment:
   sdk: '>=2.18.2 <3.0.0'
 dependencies:
   path: ^1.8.2
-
+  microshaft: ^1.0.0
+  colorize: ^3.0.0
+  http: ^0.13.5
+  json_serializable: ^6.5.1
+  json_annotation: ^4.7.0
 dev_dependencies:
   lints: ^2.0.0
+  build_runner: ^2.3.0

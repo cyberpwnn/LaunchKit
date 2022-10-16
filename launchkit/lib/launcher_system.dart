@@ -1,3 +1,5 @@
+import 'package:launchkit/sugar.dart';
+
 const String version = "2.0.0";
 
 class LauncherSystem {
@@ -6,6 +8,6 @@ class LauncherSystem {
   LauncherSystem({required this.path});
 
   Future<void> execute(List<String> arguments) async {
-    print("LaunchKit $version");
+    info("LaunchKit $version");
   }
 }
